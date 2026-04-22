@@ -36,12 +36,21 @@ SCORING RUBRIC (weights):
 OUTPUT SHAPE (JSON):
 {
   "fitScore": integer 0-100,
-  "matches":    array of up to 6 concise bullet strings describing concrete alignments,
-  "mismatches": array of up to 6 concise bullet strings describing concrete misalignments,
+  "matches": [
+    { "label": "2-5 word short tag", "detail": "optional extra context (omit when obvious)" }
+  ],
+  "mismatches": [
+    { "label": "2-5 word short tag", "detail": "optional extra context (omit when obvious)" }
+  ],
   "summary":    a single 1-2 sentence plain-English summary (<= 240 chars)
 }
 
-Bullets must reference specifics from both sides (e.g. "Node.js required — matches candidate's stack"). Avoid generic filler.`;
+LABEL RULES:
+- "label" must be short and scannable (2-5 words, no full sentence, no trailing period).
+- Prefer domain keywords: "Remote", "Node.js", "Experience gap", "On-call expectation".
+- Include "detail" only when the reason is not obvious from the label alone.
+  If obvious, omit "detail" to reduce verbosity and token use.
+`;
 
 export function buildPrompt(input: PromptInput): PromptOutput {
   const { job, userPreferences: prefs } = input;

@@ -66,12 +66,33 @@ describe("AnalyzeResultSchema", () => {
 
     const ok = AnalyzeResultSchema.parse({
       fitScore: 73,
-      matches: ["good"],
-      mismatches: ["bad"],
+      matches: [{ label: "Node.js" }],
+      mismatches: [{ label: "Experience gap", detail: "Requires 6+ years, candidate has 5" }],
       summary: "ok",
     });
 
     expect(ok.fitScore).toBe(73);
+  });
+
+  it("requires non-empty short labels and allows optional detail", () => {
+    expect(() =>
+      AnalyzeResultSchema.parse({
+        fitScore: 73,
+        matches: [{ label: "" }],
+        mismatches: [],
+        summary: "ok",
+      }),
+    ).toThrow();
+
+    const ok = AnalyzeResultSchema.parse({
+      fitScore: 60,
+      matches: [{ label: "Remote" }],
+      mismatches: [{ label: "On-call expectation" }],
+      summary: "Good fit with one concern.",
+    });
+
+    expect(ok.matches[0]?.label).toBe("Remote");
+    expect(ok.matches[0]?.detail).toBeUndefined();
   });
 });
 

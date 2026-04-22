@@ -27,10 +27,16 @@ export const AnalyzeRequestSchema = z.object({
 });
 export type AnalyzeRequest = z.infer<typeof AnalyzeRequestSchema>;
 
+export const AnalyzeTagSchema = z.object({
+  label: z.string().min(1).max(40),
+  detail: z.string().min(1).max(200).optional(),
+});
+export type AnalyzeTag = z.infer<typeof AnalyzeTagSchema>;
+
 export const AnalyzeResultSchema = z.object({
   fitScore: z.number().int().min(0).max(100),
-  matches: z.array(z.string().min(1)).min(0).max(10),
-  mismatches: z.array(z.string().min(1)).min(0).max(10),
+  matches: z.array(AnalyzeTagSchema).min(0).max(10),
+  mismatches: z.array(AnalyzeTagSchema).min(0).max(10),
   summary: z.string().min(1).max(400),
 });
 export type AnalyzeResult = z.infer<typeof AnalyzeResultSchema>;
