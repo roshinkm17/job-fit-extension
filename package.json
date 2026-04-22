@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "pnpm -r --if-present typecheck",
+    "verify:rls": "tsx scripts/supabase/verify-rls.ts",
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check --write .",
@@ -24,9 +25,11 @@
     ]
   },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.49.8",
     "@biomejs/biome": "^2.4.12",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
+    "tsx": "^4.20.6",
     "vitest": "^4.1.5"
   }
 }
