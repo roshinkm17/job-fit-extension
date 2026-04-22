@@ -108,6 +108,7 @@ function handleChange(
     company: result.job.company,
     location: result.job.location,
     descriptionLength: result.job.description.length,
+    description: result.job.description,
   });
   setState(() => ({ job: result.job, jobId: locator.jobId, error: null }));
 }
