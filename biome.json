@@ -18,7 +18,10 @@
       "!**/.output",
       "!**/node_modules",
       "!**/pnpm-lock.yaml",
-      "!**/*.tsbuildinfo"
+      "!**/*.tsbuildinfo",
+      "!apps/web/src/components/ui",
+      "!apps/web/src/components/theme-provider.tsx",
+      "!apps/web/src/lib/utils.ts"
     ]
   },
   "formatter": {

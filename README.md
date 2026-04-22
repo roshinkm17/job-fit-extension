@@ -16,10 +16,33 @@ packages/
 
 ## Status
 
-Phase 1 scaffolding complete. See the plan at `docs/plan.md` for build order and verification checkpoints.
+- Phase 1: Monorepo scaffolding + shared schemas — **done**
+- Phase 2: LLM adapter (OpenAI/Anthropic/Groq) — **done**
+- Phase 3: Supabase `user_preferences` + RLS — **done**
+- Phase 4: Fastify `POST /analyze` with JWT + LLM — **done**
+- Phase 5: Vite + shadcn preferences web app with Supabase auth — **done**
+- Phase 6: Plasmo extension + LinkedIn DOM extraction — pending
+- Phase 7: "Check Match Score" button UI — pending
+- Phase 8: Extension ↔ backend wiring + auth handoff — pending
+- Phase 9: DOM fixture tests + hardening — pending
+- Phase 10: README + packaging — pending
+
+See `docs/plan.md` for build order and verification checkpoints.
 
 ## Requirements
 
 - Node >= 22
 - pnpm >= 10
+
+## Workspace scripts
+
+```bash
+pnpm typecheck       # tsc across every package
+pnpm test            # all Vitest suites
+pnpm check           # biome format + lint with --write
+pnpm check:ci        # biome verify (no write)
+pnpm verify:rls      # end-to-end RLS policy check against Supabase
+pnpm web:dev         # vite dev server for the preferences app
+pnpm seed:web-user   # seed a confirmed user for web manual QA
+```
 
