@@ -1,6 +1,4 @@
 import OpenAI from "openai";
-import { zodResponseFormat } from "openai/helpers/zod";
-import type { z } from "zod";
 import { parseJsonWithSchema } from "../parse.js";
 import {
   type CompleteOptions,
@@ -17,10 +15,12 @@ export interface OpenAiClientConfig {
 }
 
 /**
- * OpenAI adapter using the SDK's `beta.chat.completions.parse` helper, which
- * enforces a JSON Schema (derived from Zod) on the server side. Falls back to
- * permissive JSON parsing if the SDK's strict parse is not available for a
- * given model (e.g. when pointed at a Groq-compatible endpoint).
+ * OpenAI adapter using JSON mode + local Zod validation.
+ *
+ * We intentionally avoid `beta.chat.completions.parse` because OpenAI's strict
+ * schema validator currently requires all object properties to be marked
+ * required. Our output shape allows optional `detail`, so strict schema mode
+ * rejects the request before generation.
  */
 export class OpenAiLlmClient implements LlmClient {
   public readonly provider = "openai" as const;
@@ -37,7 +37,7 @@ export class OpenAiLlmClient implements LlmClient {
 
   async complete<T>(opts: CompleteOptions<T>): Promise<T> {
     try {
-      return await this.parsedCompletion(opts);
+      return await this.jsonModeCompletion(opts);
     } catch (error) {
       if (error instanceof LlmValidationError || error instanceof LlmInvocationError) {
         throw error;
@@ -51,20 +51,20 @@ export class OpenAiLlmClient implements LlmClient {
     }
   }
 
-  private async parsedCompletion<T>(opts: CompleteOptions<T>): Promise<T> {
-    const completion = await this.client.beta.chat.completions.parse(
+  private async jsonModeCompletion<T>(opts: CompleteOptions<T>): Promise<T> {
+    const completion = await this.client.chat.completions.create(
       {
         model: this.model,
         messages: [
-          { role: "system", content: opts.system },
+          {
+            role: "system",
+            content: `${opts.system}\n\nRespond with a single JSON object only. No prose or code fences.`,
+          },
           { role: "user", content: opts.user },
         ],
-        response_format: zodResponseFormat(
-          opts.schema as unknown as z.ZodObject<z.ZodRawShape>,
-          opts.schemaName ?? "result",
-        ),
+        response_format: { type: "json_object" },
         temperature: opts.temperature ?? 0.2,
-        ...(opts.maxOutputTokens ? { max_completion_tokens: opts.maxOutputTokens } : {}),
+        ...(opts.maxOutputTokens ? { max_tokens: opts.maxOutputTokens } : {}),
       },
       opts.signal ? { signal: opts.signal } : undefined,
     );
@@ -73,20 +73,6 @@ export class OpenAiLlmClient implements LlmClient {
     if (message?.refusal) {
       throw new LlmInvocationError(`OpenAI refused the request: ${message.refusal}`, this.provider);
     }
-
-    if (message?.parsed) {
-      const result = opts.schema.safeParse(message.parsed);
-      if (!result.success) {
-        throw new LlmValidationError(
-          `OpenAI parsed payload did not match schema: ${result.error.message}`,
-          this.provider,
-          message.parsed,
-          result.error,
-        );
-      }
-      return result.data;
-    }
-
     const raw = message?.content ?? "";
     return parseJsonWithSchema(raw, opts.schema, this.provider);
   }

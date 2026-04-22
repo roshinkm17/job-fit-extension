@@ -48,7 +48,9 @@ Override via `LLM_MODEL=...` — e.g. `LLM_MODEL=gpt-4.1-nano` for cheaper OpenA
 LLM_PROVIDER=openai OPENAI_API_KEY=sk-... pnpm --filter @job-fit/llm smoke
 ```
 
-Prints a fully validated `AnalyzeResult` JSON object and exits 0 on success.
+The smoke command first rebuilds `@job-fit/shared` so schema/prompt changes are
+always reflected. It then prints a fully validated `AnalyzeResult` JSON object
+and exits 0 on success.
 
 ## Design notes
 
