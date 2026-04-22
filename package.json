@@ -1,0 +1,16 @@
+{
+  "name": "job-fit-extension",
+  "private": true,
+  "version": "0.0.0",
+  "description": "LinkedIn Job Fit: Chrome extension + Fastify backend + Vite prefs web app",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "pnpm -r --if-present build",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "pnpm -r --if-present lint"
+  }
+}
