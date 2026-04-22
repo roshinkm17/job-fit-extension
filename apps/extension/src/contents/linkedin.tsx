@@ -1,7 +1,9 @@
 import type { JobData } from "@job-fit/shared";
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetStyle } from "plasmo";
-import { useEffect, useState } from "react";
-import { OverlayShell } from "../components/OverlayShell";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { MatchCard } from "../features/match/MatchCard";
+import { analyzeJob } from "../lib/analyze";
+import { analysisReducer, buildJobKey, INITIAL_ANALYSIS_STATE } from "../lib/analyze-machine";
 import { extractJobData } from "../lib/extractor";
 import { logger } from "../lib/logger";
 import { createJobContextWatcher, type JobContextChange } from "../lib/observer";
@@ -26,13 +28,6 @@ function findAnchor(): Element | null {
   return null;
 }
 
-/**
- * Anchor above LinkedIn's job detail pane. LinkedIn renders the job column
- * asynchronously, so we resolve only once an anchor actually exists instead
- * of throwing (which surfaces as an unhandled rejection in the page console).
- * The returned promise is cheap: it disconnects the observer as soon as the
- * first matching element appears.
- */
 interface InlineAnchor {
   readonly element: Element;
   readonly insertPosition: InsertPosition;
@@ -60,44 +55,87 @@ export const getStyle: PlasmoGetStyle = () => {
   return style;
 };
 
-interface ContentState {
+interface ExtractionState {
   readonly job: JobData | null;
   readonly jobId: string | null;
-  readonly error: string | null;
+  readonly reason: string | null;
 }
 
-const INITIAL_STATE: ContentState = { job: null, jobId: null, error: null };
+const INITIAL_EXTRACTION: ExtractionState = { job: null, jobId: null, reason: null };
 
 export default function JobFitContent(): JSX.Element {
-  const [state, setState] = useState<ContentState>(INITIAL_STATE);
+  const [extraction, setExtraction] = useState<ExtractionState>(INITIAL_EXTRACTION);
+  const [analysis, dispatch] = useReducer(analysisReducer, INITIAL_ANALYSIS_STATE);
+  const abortRef = useRef<AbortController | null>(null);
+  const prevJobIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const watcher = createJobContextWatcher({
-      onChange: (event) => handleChange(event, setState),
+      onChange: (event) => handleChange(event, setExtraction),
     });
     watcher.start();
-    return () => watcher.stop();
+    return () => {
+      watcher.stop();
+      abortRef.current?.abort();
+    };
   }, []);
 
-  return <OverlayShell job={state.job} jobId={state.jobId} error={state.error} />;
+  useEffect(() => {
+    if (prevJobIdRef.current === extraction.jobId) return;
+    prevJobIdRef.current = extraction.jobId;
+    dispatch({ type: "RESET" });
+    abortRef.current?.abort();
+    abortRef.current = null;
+  }, [extraction.jobId]);
+
+  const onCheck = useCallback(() => {
+    const job = extraction.job;
+    if (!job) return;
+    const jobKey = buildJobKey(job);
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    dispatch({ type: "CHECK", jobKey });
+    analyzeJob(job, { signal: controller.signal })
+      .then((result) => {
+        if (controller.signal.aborted) return;
+        dispatch({ type: "SUCCESS", jobKey, result });
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        const message = error instanceof Error ? error.message : "Unknown error";
+        logger.warn("analyze failed", { message, jobKey });
+        dispatch({ type: "FAILURE", jobKey, error: message });
+      });
+  }, [extraction.job]);
+
+  return (
+    <MatchCard
+      state={analysis}
+      job={extraction.job}
+      jobId={extraction.jobId}
+      jobReason={extraction.reason}
+      onCheck={onCheck}
+    />
+  );
 }
 
 function handleChange(
   event: JobContextChange,
-  setState: (updater: (prev: ContentState) => ContentState) => void,
+  setExtraction: (updater: (prev: ExtractionState) => ExtractionState) => void,
 ): void {
   const locator = event.locator;
   if (!locator) {
-    setState(() => INITIAL_STATE);
+    setExtraction(() => INITIAL_EXTRACTION);
     return;
   }
   const result = extractJobData(document);
   if (!result.ok) {
     logger.info("waiting for DOM", { reason: result.reason, trigger: event.trigger });
-    setState((prev) => ({
+    setExtraction(() => ({
       job: null,
       jobId: locator.jobId,
-      error: event.trigger === "initial" ? null : prev.error,
+      reason: result.reason,
     }));
     return;
   }
@@ -110,5 +148,5 @@ function handleChange(
     descriptionLength: result.job.description.length,
     description: result.job.description,
   });
-  setState(() => ({ job: result.job, jobId: locator.jobId, error: null }));
+  setExtraction(() => ({ job: result.job, jobId: locator.jobId, reason: null }));
 }
