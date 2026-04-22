@@ -34,9 +34,6 @@ async function main(): Promise<void> {
   const service = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },
   });
-  const anon = createClient(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
 
   const runId = Date.now();
   const userAEmail = `rls-a-${runId}@jobfit.local`;
@@ -46,8 +43,17 @@ async function main(): Promise<void> {
   const userB = await createTestUser(service, userBEmail, password);
 
   try {
-    const userAClient = await signInAs(anon, userAEmail, password);
-    const userBClient = await signInAs(anon, userBEmail, password);
+    // Use separate client instances so each user keeps an independent session.
+    const userAClient = await signInAs(
+      createAnonClient(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY),
+      userAEmail,
+      password,
+    );
+    const userBClient = await signInAs(
+      createAnonClient(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY),
+      userBEmail,
+      password,
+    );
 
     await upsertOwnRow(userAClient, userA.id, 5, ["backend"]);
     await upsertOwnRow(userBClient, userB.id, 9, ["platform"]);
@@ -105,6 +111,12 @@ async function main(): Promise<void> {
     await service.auth.admin.deleteUser(userA.id);
     await service.auth.admin.deleteUser(userB.id);
   }
+}
+
+function createAnonClient(url: string, publishableKey: string) {
+  return createClient(url, publishableKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 async function createTestUser(
