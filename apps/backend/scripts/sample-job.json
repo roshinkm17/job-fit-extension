@@ -1,0 +1,8 @@
+{
+  "job": {
+    "title": "Senior Backend Engineer",
+    "company": "Acme Robotics",
+    "location": "Remote — North America",
+    "description": "We are hiring a Senior Backend Engineer to design and operate distributed services powering our fleet platform. You will own critical services written in Node.js and TypeScript, design Postgres schemas, and partner with SREs on observability. We expect 6+ years of backend experience. Comfort with on-call rotations and incident response is required. Nice to have: experience with Kafka or SQS/SNS, Kubernetes, and latency-sensitive systems. Fully remote within North America. Compensation: $180k-$220k + equity."
+  }
+}
