@@ -21,7 +21,7 @@ packages/
 - Phase 3: Supabase `user_preferences` + RLS — **done**
 - Phase 4: Fastify `POST /analyze` with JWT + LLM — **done**
 - Phase 5: Vite + shadcn preferences web app with Supabase auth — **done**
-- Phase 6: Plasmo extension + LinkedIn DOM extraction — pending
+- Phase 6: Plasmo extension + LinkedIn DOM extraction — **done**
 - Phase 7: "Check Match Score" button UI — pending
 - Phase 8: Extension ↔ backend wiring + auth handoff — pending
 - Phase 9: DOM fixture tests + hardening — pending
@@ -44,5 +44,7 @@ pnpm check:ci        # biome verify (no write)
 pnpm verify:rls      # end-to-end RLS policy check against Supabase
 pnpm web:dev         # vite dev server for the preferences app
 pnpm seed:web-user   # seed a confirmed user for web manual QA
+pnpm ext:dev         # plasmo dev (unpacked extension with HMR)
+pnpm ext:build       # plasmo build → apps/extension/build/chrome-mv3-prod/
 ```
 

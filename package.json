@@ -16,6 +16,8 @@
     "seed:web-user": "tsx --env-file=.env.local scripts/supabase/seed-web-user.mts",
     "web:dev": "pnpm --filter @job-fit/web dev",
     "web:build": "pnpm --filter @job-fit/web build",
+    "ext:dev": "pnpm --filter @job-fit/extension dev",
+    "ext:build": "pnpm --filter @job-fit/extension build",
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check --write .",

@@ -1,0 +1,41 @@
+{
+  "name": "@job-fit/extension",
+  "displayName": "Job Fit",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Real-time LinkedIn job fit analysis overlay.",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@job-fit/shared": "workspace:*",
+    "plasmo": "^0.90.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@types/chrome": "^0.0.287",
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "jsdom": "^29.0.2",
+    "typescript": "^5.6.3",
+    "vitest": "^4.1.5"
+  },
+  "manifest": {
+    "name": "Job Fit",
+    "description": "See how well a LinkedIn job matches your saved preferences.",
+    "host_permissions": [
+      "https://*.linkedin.com/*"
+    ],
+    "permissions": [
+      "storage"
+    ]
+  }
+}

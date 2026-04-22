@@ -88,6 +88,20 @@
           "suspicious": { "noConsole": "off" }
         }
       }
+    },
+    {
+      "includes": [
+        "apps/extension/src/contents/**",
+        "apps/extension/src/background*",
+        "apps/extension/src/popup*",
+        "apps/extension/src/options*",
+        "apps/extension/src/newtab*"
+      ],
+      "linter": {
+        "rules": {
+          "style": { "noDefaultExport": "off" }
+        }
+      }
     }
   ]
 }
