@@ -1,85 +1,117 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import {
-  AnalyzeRequestSchema,
-  AnalyzeResultSchema,
-  UserPreferencesSchema,
-} from "./schemas.js";
+import { describe, expect, it } from "vitest";
 import { buildPrompt, truncateDescription } from "./prompt.js";
+import { AnalyzeRequestSchema, AnalyzeResultSchema, UserPreferencesSchema } from "./schemas.js";
 
-test("UserPreferencesSchema applies defaults", () => {
-  const parsed = UserPreferencesSchema.parse({ experienceYears: 5 });
-  assert.equal(parsed.experienceYears, 5);
-  assert.deepEqual(parsed.roles, []);
-  assert.deepEqual(parsed.techStack, []);
-  assert.deepEqual(parsed.workType, []);
-});
+describe("UserPreferencesSchema", () => {
+  it("applies defaults for optional array fields", () => {
+    const parsed = UserPreferencesSchema.parse({ experienceYears: 5 });
 
-test("UserPreferencesSchema rejects invalid work mode", () => {
-  assert.throws(() =>
-    UserPreferencesSchema.parse({ experienceYears: 3, workType: ["on-the-moon"] as unknown as [] }),
-  );
-});
-
-test("AnalyzeRequestSchema requires job title and description", () => {
-  assert.throws(() =>
-    AnalyzeRequestSchema.parse({ job: { title: "", company: "x", description: "y" } }),
-  );
-  assert.throws(() =>
-    AnalyzeRequestSchema.parse({ job: { title: "x", company: "x", description: "" } }),
-  );
-  const ok = AnalyzeRequestSchema.parse({
-    job: { title: "SWE", company: "Acme", description: "Build stuff" },
+    expect(parsed.experienceYears).toBe(5);
+    expect(parsed.roles).toEqual([]);
+    expect(parsed.techStack).toEqual([]);
+    expect(parsed.workType).toEqual([]);
   });
-  assert.equal(ok.job.title, "SWE");
-});
 
-test("AnalyzeResultSchema clamps score range", () => {
-  assert.throws(() =>
-    AnalyzeResultSchema.parse({ fitScore: 101, matches: [], mismatches: [], summary: "x" }),
-  );
-  assert.throws(() =>
-    AnalyzeResultSchema.parse({ fitScore: -1, matches: [], mismatches: [], summary: "x" }),
-  );
-  const ok = AnalyzeResultSchema.parse({
-    fitScore: 73,
-    matches: ["good"],
-    mismatches: ["bad"],
-    summary: "ok",
+  it("rejects invalid work mode values", () => {
+    expect(() =>
+      UserPreferencesSchema.parse({
+        experienceYears: 3,
+        workType: ["on-the-moon"],
+      }),
+    ).toThrow();
   });
-  assert.equal(ok.fitScore, 73);
 });
 
-test("truncateDescription leaves short input untouched", () => {
-  assert.equal(truncateDescription("short"), "short");
-});
+describe("AnalyzeRequestSchema", () => {
+  it("requires a non-empty title and description", () => {
+    expect(() =>
+      AnalyzeRequestSchema.parse({
+        job: { title: "", company: "x", description: "y" },
+      }),
+    ).toThrow();
 
-test("truncateDescription trims very long input", () => {
-  const long = "a".repeat(20_000);
-  const out = truncateDescription(long, 1000);
-  assert.ok(out.length < long.length);
-  assert.ok(out.endsWith("[...truncated for length]"));
-});
+    expect(() =>
+      AnalyzeRequestSchema.parse({
+        job: { title: "x", company: "x", description: "" },
+      }),
+    ).toThrow();
 
-test("buildPrompt includes job title and preferences", () => {
-  const prefs = UserPreferencesSchema.parse({
-    experienceYears: 5,
-    roles: ["backend"],
-    techStack: ["node.js", "typescript"],
-    locations: ["remote"],
-    workType: ["remote"],
+    const ok = AnalyzeRequestSchema.parse({
+      job: { title: "SWE", company: "Acme", description: "Build stuff" },
+    });
+
+    expect(ok.job.title).toBe("SWE");
   });
-  const { system, user } = buildPrompt({
-    job: {
-      title: "Senior Backend Engineer",
-      company: "Acme",
-      location: "Remote",
-      description: "Build distributed systems in Node.js and TypeScript.",
-    },
-    userPreferences: prefs,
+});
+
+describe("AnalyzeResultSchema", () => {
+  it("clamps fit score to 0-100", () => {
+    expect(() =>
+      AnalyzeResultSchema.parse({
+        fitScore: 101,
+        matches: [],
+        mismatches: [],
+        summary: "x",
+      }),
+    ).toThrow();
+
+    expect(() =>
+      AnalyzeResultSchema.parse({
+        fitScore: -1,
+        matches: [],
+        mismatches: [],
+        summary: "x",
+      }),
+    ).toThrow();
+
+    const ok = AnalyzeResultSchema.parse({
+      fitScore: 73,
+      matches: ["good"],
+      mismatches: ["bad"],
+      summary: "ok",
+    });
+
+    expect(ok.fitScore).toBe(73);
   });
-  assert.match(system, /job-fit evaluation engine/);
-  assert.match(user, /Senior Backend Engineer/);
-  assert.match(user, /node\.js/);
-  assert.match(user, /Respond with JSON only\./);
+});
+
+describe("truncateDescription", () => {
+  it("leaves short input untouched", () => {
+    expect(truncateDescription("short")).toBe("short");
+  });
+
+  it("trims very long input and appends marker", () => {
+    const long = "a".repeat(20_000);
+    const out = truncateDescription(long, 1000);
+
+    expect(out.length).toBeLessThan(long.length);
+    expect(out.endsWith("[...truncated for length]")).toBe(true);
+  });
+});
+
+describe("buildPrompt", () => {
+  it("embeds job details and candidate preferences", () => {
+    const prefs = UserPreferencesSchema.parse({
+      experienceYears: 5,
+      roles: ["backend"],
+      techStack: ["node.js", "typescript"],
+      locations: ["remote"],
+      workType: ["remote"],
+    });
+
+    const { system, user } = buildPrompt({
+      job: {
+        title: "Senior Backend Engineer",
+        company: "Acme",
+        location: "Remote",
+        description: "Build distributed systems in Node.js and TypeScript.",
+      },
+      userPreferences: prefs,
+    });
+
+    expect(system).toMatch(/job-fit evaluation engine/);
+    expect(user).toMatch(/Senior Backend Engineer/);
+    expect(user).toMatch(/node\.js/);
+    expect(user).toMatch(/Respond with JSON only\./);
+  });
 });

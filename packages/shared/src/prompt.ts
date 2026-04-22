@@ -4,7 +4,7 @@ const MAX_DESCRIPTION_CHARS = 12_000;
 
 export function truncateDescription(description: string, maxChars = MAX_DESCRIPTION_CHARS): string {
   if (description.length <= maxChars) return description;
-  return description.slice(0, maxChars) + "\n\n[...truncated for length]";
+  return `${description.slice(0, maxChars)}\n\n[...truncated for length]`;
 }
 
 export interface PromptInput {
