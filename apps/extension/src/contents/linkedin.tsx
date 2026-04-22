@@ -11,22 +11,48 @@ export const config: PlasmoCSConfig = {
   run_at: "document_idle",
 };
 
+const ANCHOR_SELECTORS = [
+  ".job-details-jobs-unified-top-card__container--two-pane",
+  ".jobs-unified-top-card",
+  ".jobs-search__job-details--container",
+  ".jobs-details__main-content",
+] as const;
+
+function findAnchor(): Element | null {
+  for (const selector of ANCHOR_SELECTORS) {
+    const match = document.querySelector(selector);
+    if (match) return match;
+  }
+  return null;
+}
+
 /**
- * Anchor above LinkedIn's job detail pane. We fall back to the main content
- * region if the top card shell isn't present yet; Plasmo retries automatically.
+ * Anchor above LinkedIn's job detail pane. LinkedIn renders the job column
+ * asynchronously, so we resolve only once an anchor actually exists instead
+ * of throwing (which surfaces as an unhandled rejection in the page console).
+ * The returned promise is cheap: it disconnects the observer as soon as the
+ * first matching element appears.
  */
-export const getInlineAnchor: PlasmoGetInlineAnchor = async () => {
-  const candidate =
-    document.querySelector(".job-details-jobs-unified-top-card__container--two-pane") ??
-    document.querySelector(".jobs-unified-top-card") ??
-    document.querySelector(".jobs-search__job-details--container") ??
-    document.querySelector(".jobs-details__main-content");
-  if (!candidate) throw new Error("anchor not ready");
-  return {
-    element: candidate,
-    insertPosition: "beforebegin",
-  };
-};
+interface InlineAnchor {
+  readonly element: Element;
+  readonly insertPosition: InsertPosition;
+}
+
+export const getInlineAnchor: PlasmoGetInlineAnchor = () =>
+  new Promise<InlineAnchor>((resolve) => {
+    const existing = findAnchor();
+    if (existing) {
+      resolve({ element: existing, insertPosition: "beforebegin" });
+      return;
+    }
+    const observer = new MutationObserver(() => {
+      const element = findAnchor();
+      if (!element) return;
+      observer.disconnect();
+      resolve({ element, insertPosition: "beforebegin" });
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+  });
 
 export const getStyle: PlasmoGetStyle = () => {
   const style = document.createElement("style");
