@@ -30,6 +30,7 @@ const WORK_MODES: { value: WorkMode; label: string }[] = [
 export function PreferencesForm() {
   const { user, supabase, signOut } = useAuth();
   const [preferences, setPreferences] = useState<UserPreferences>(EMPTY_PREFERENCES);
+  const [dealBreakersDraft, setDealBreakersDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -40,7 +41,10 @@ export function PreferencesForm() {
     loadPreferences(supabase, user.id)
       .then((prefs) => {
         if (cancelled) return;
-        if (prefs) setPreferences(prefs);
+        if (prefs) {
+          setPreferences(prefs);
+          setDealBreakersDraft(prefs.dealBreakers.join("\n"));
+        }
       })
       .catch((error: Error) => toast.error(error.message))
       .finally(() => {
@@ -55,13 +59,25 @@ export function PreferencesForm() {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   }
 
+  function parseDealBreakers(raw: string): string[] {
+    return raw
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!user || saving) return;
     setSaving(true);
     try {
-      const saved = await savePreferences(supabase, user.id, preferences);
+      const payload: UserPreferences = {
+        ...preferences,
+        dealBreakers: parseDealBreakers(dealBreakersDraft),
+      };
+      const saved = await savePreferences(supabase, user.id, payload);
       setPreferences(saved);
+      setDealBreakersDraft(saved.dealBreakers.join("\n"));
       toast.success("Preferences saved.");
     } catch (error) {
       toast.error((error as Error).message);
@@ -167,16 +183,8 @@ export function PreferencesForm() {
                 id="dealBreakers"
                 rows={3}
                 placeholder="One per line. e.g. On-call rotations > 1 week/month"
-                value={preferences.dealBreakers.join("\n")}
-                onChange={(event) =>
-                  update(
-                    "dealBreakers",
-                    event.target.value
-                      .split("\n")
-                      .map((line) => line.trim())
-                      .filter((line) => line.length > 0),
-                  )
-                }
+                value={dealBreakersDraft}
+                onChange={(event) => setDealBreakersDraft(event.target.value)}
               />
               <FieldDescription>These carry heavy negative weight during scoring.</FieldDescription>
             </Field>
