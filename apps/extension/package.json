@@ -13,9 +13,11 @@
   },
   "dependencies": {
     "@job-fit/shared": "workspace:*",
+    "@supabase/supabase-js": "^2.104.0",
     "plasmo": "^0.90.5",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "zod": "3.24.4"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
@@ -34,10 +36,19 @@
     "name": "Job Fit",
     "description": "See how well a LinkedIn job matches your saved preferences.",
     "host_permissions": [
-      "https://*.linkedin.com/*"
+      "https://*.linkedin.com/*",
+      "http://localhost:3000/*",
+      "http://127.0.0.1:3000/*",
+      "https://*.supabase.co/*"
     ],
     "permissions": [
       "storage"
-    ]
+    ],
+    "externally_connectable": {
+      "matches": [
+        "http://localhost:5173/*",
+        "http://127.0.0.1:5173/*"
+      ]
+    }
   }
 }

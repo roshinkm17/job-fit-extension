@@ -78,6 +78,9 @@ importers:
       '@job-fit/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@supabase/supabase-js':
+        specifier: ^2.104.0
+        version: 2.104.0
       plasmo:
         specifier: ^0.90.5
         version: 0.90.5(@swc/core@1.15.30(@swc/helpers@0.5.21))(@swc/helpers@0.5.21)(@types/node@22.19.17)(postcss@8.5.10)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -87,6 +90,9 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
+      zod:
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@testing-library/dom':
         specifier: ^10.4.1

@@ -1,4 +1,5 @@
 import type { AnalyzeResult, JobData } from "@job-fit/shared";
+import type { AnalyzeErrorCode } from "./api-errors";
 
 export type AnalysisStatus = "idle" | "loading" | "result" | "error";
 
@@ -8,6 +9,7 @@ export interface AnalysisState {
   readonly jobKey: string | null;
   readonly result: AnalyzeResult | null;
   readonly error: string | null;
+  readonly errorCode: AnalyzeErrorCode | null;
 }
 
 export const INITIAL_ANALYSIS_STATE: AnalysisState = {
@@ -15,12 +17,18 @@ export const INITIAL_ANALYSIS_STATE: AnalysisState = {
   jobKey: null,
   result: null,
   error: null,
+  errorCode: null,
 };
 
 export type AnalysisEvent =
   | { readonly type: "CHECK"; readonly jobKey: string }
   | { readonly type: "SUCCESS"; readonly jobKey: string; readonly result: AnalyzeResult }
-  | { readonly type: "FAILURE"; readonly jobKey: string; readonly error: string }
+  | {
+      readonly type: "FAILURE";
+      readonly jobKey: string;
+      readonly error: string;
+      readonly errorCode?: AnalyzeErrorCode;
+    }
   | { readonly type: "RESET" };
 
 /**
@@ -39,6 +47,7 @@ export function analysisReducer(state: AnalysisState, event: AnalysisEvent): Ana
         jobKey: event.jobKey,
         result: null,
         error: null,
+        errorCode: null,
       };
     case "SUCCESS":
       if (state.status !== "loading" || state.jobKey !== event.jobKey) return state;
@@ -47,6 +56,7 @@ export function analysisReducer(state: AnalysisState, event: AnalysisEvent): Ana
         jobKey: event.jobKey,
         result: event.result,
         error: null,
+        errorCode: null,
       };
     case "FAILURE":
       if (state.status !== "loading" || state.jobKey !== event.jobKey) return state;
@@ -55,6 +65,7 @@ export function analysisReducer(state: AnalysisState, event: AnalysisEvent): Ana
         jobKey: event.jobKey,
         result: null,
         error: event.error,
+        errorCode: event.errorCode ?? null,
       };
     case "RESET":
       return INITIAL_ANALYSIS_STATE;

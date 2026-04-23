@@ -1,15 +1,50 @@
 import type { AnalyzeResult, JobData } from "@job-fit/shared";
+import type { AnalyzeFn, AnalyzeOptions } from "./analyze-types";
+import { createHttpAnalyze } from "./api";
+import { readEnv } from "./env";
+import { getValidAccessToken } from "./supabase";
 
-export interface AnalyzeOptions {
-  readonly signal?: AbortSignal;
+export type { AnalyzeFn, AnalyzeOptions } from "./analyze-types";
+export { createHttpAnalyze } from "./api";
+
+/** @deprecated Use `analyzeForContent` (respects env + test overrides). */
+export const analyzeJob: AnalyzeFn = (job, options) => analyzeForContent(job, options);
+
+export function getAnalyze(): AnalyzeFn {
+  if (cached) return cached;
+  if (isMockMode()) {
+    cached = createMockAnalyze();
+  } else {
+    const env = readEnv();
+    cached = createHttpAnalyze({
+      endpoint: env.backendUrl,
+      getAccessToken: getValidAccessToken,
+    });
+  }
+  return cached;
 }
 
+let testOverride: AnalyzeFn | null = null;
+let cached: AnalyzeFn | null = null;
+
 /**
- * Contract for the "run the fit analysis for this job" operation. Phase 7
- * ships a deterministic in-memory mock so the UI can be built end-to-end;
- * Phase 8 swaps in the real backend call behind the same signature.
+ * The live entry for the content script. Tests can inject a stub with
+ * `__setAnalyzeForTests` without importing Plasmo env.
  */
-export type AnalyzeFn = (job: JobData, options?: AnalyzeOptions) => Promise<AnalyzeResult>;
+export const analyzeForContent: AnalyzeFn = (job, options) =>
+  (testOverride ?? getAnalyze())(job, options);
+
+export function __setAnalyzeForTests(next: AnalyzeFn | null): void {
+  testOverride = next;
+  cached = null;
+}
+
+function isMockMode(): boolean {
+  if (typeof process === "undefined" || !process?.env) return false;
+  if ((process.env.NODE_ENV as string | undefined) === "test") return true;
+  const v = process.env.PLASMO_PUBLIC_USE_MOCK_ANALYZE;
+  return v === "1" || v === "true" || v === "yes";
+}
 
 /** Tunables kept at module scope so tests can shorten the fake latency. */
 interface MockConfig {
@@ -24,12 +59,10 @@ export function createMockAnalyze(overrides: Partial<MockConfig> = {}): AnalyzeF
   return (job, options) => runMockAnalyze(job, config, options);
 }
 
-export const analyzeJob: AnalyzeFn = createMockAnalyze();
-
 function runMockAnalyze(
   job: JobData,
   config: MockConfig,
-  options?: AnalyzeOptions,
+  options: AnalyzeOptions | undefined,
 ): Promise<AnalyzeResult> {
   return new Promise<AnalyzeResult>((resolve, reject) => {
     if (options?.signal?.aborted) {

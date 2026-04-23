@@ -2,8 +2,9 @@ import type { JobData } from "@job-fit/shared";
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetStyle } from "plasmo";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { MatchCard } from "../features/match/MatchCard";
-import { analyzeJob } from "../lib/analyze";
+import { analyzeForContent } from "../lib/analyze";
 import { analysisReducer, buildJobKey, INITIAL_ANALYSIS_STATE } from "../lib/analyze-machine";
+import { AnalyzeError } from "../lib/api-errors";
 import { extractJobData } from "../lib/extractor";
 import { logger } from "../lib/logger";
 import { createJobContextWatcher, type JobContextChange } from "../lib/observer";
@@ -96,16 +97,26 @@ export default function JobFitContent(): JSX.Element {
     const controller = new AbortController();
     abortRef.current = controller;
     dispatch({ type: "CHECK", jobKey });
-    analyzeJob(job, { signal: controller.signal })
+    analyzeForContent(job, { signal: controller.signal })
       .then((result) => {
         if (controller.signal.aborted) return;
         dispatch({ type: "SUCCESS", jobKey, result });
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
+        if (error instanceof AnalyzeError) {
+          logger.warn("analyze failed", { message: error.message, code: error.code, jobKey });
+          dispatch({
+            type: "FAILURE",
+            jobKey,
+            error: error.message,
+            errorCode: error.code,
+          });
+          return;
+        }
         const message = error instanceof Error ? error.message : "Unknown error";
         logger.warn("analyze failed", { message, jobKey });
-        dispatch({ type: "FAILURE", jobKey, error: message });
+        dispatch({ type: "FAILURE", jobKey, error: message, errorCode: "unknown" });
       });
   }, [extraction.job]);
 

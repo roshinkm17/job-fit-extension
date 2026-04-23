@@ -94,6 +94,7 @@ describe("MatchCard", () => {
       jobKey: "k",
       result: null,
       error: null,
+      errorCode: null,
     };
     render(<MatchCard state={state} job={JOB} jobId="123" jobReason={null} onCheck={() => {}} />);
     expect(screen.getByText(/scoring senior backend engineer/i)).toBeDefined();
@@ -105,6 +106,7 @@ describe("MatchCard", () => {
       jobKey: "k",
       result: RESULT,
       error: null,
+      errorCode: null,
     };
     render(<MatchCard state={state} job={JOB} jobId="123" jobReason={null} onCheck={() => {}} />);
     expect(screen.getByRole("img", { name: /fit score 82 out of 100/i })).toBeDefined();
@@ -123,6 +125,7 @@ describe("MatchCard", () => {
       jobKey: "k",
       result: RESULT,
       error: null,
+      errorCode: null,
     };
     render(<MatchCard state={state} job={JOB} jobId="123" jobReason={null} onCheck={() => {}} />);
     const badge = screen.getByRole("listitem", { name: /match:\s*Node\.js/i });
@@ -136,6 +139,7 @@ describe("MatchCard", () => {
       jobKey: "k",
       result: null,
       error: "Backend unreachable",
+      errorCode: "network",
     };
     render(<MatchCard state={state} job={JOB} jobId="123" jobReason={null} onCheck={onCheck} />);
     const alert = screen.getByRole("alert");

@@ -1,5 +1,6 @@
 import type { Session, SupabaseClient, User } from "@supabase/supabase-js";
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import { pushSessionToExtension } from "@/lib/extension-bridge";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export interface AuthState {
@@ -42,6 +43,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.subscription.unsubscribe();
     };
   }, [supabase]);
+
+  useEffect(() => {
+    if (state.status === "signed-in" && state.session) {
+      pushSessionToExtension(state.session);
+    } else if (state.status === "signed-out") {
+      pushSessionToExtension(null);
+    }
+  }, [state.status, state.session]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

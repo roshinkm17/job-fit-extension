@@ -26,6 +26,9 @@ export default defineConfig(({ mode }) => {
       "import.meta.env.VITE_BACKEND_URL": JSON.stringify(
         rootEnv.VITE_BACKEND_URL ?? localEnv.VITE_BACKEND_URL ?? "http://localhost:3000",
       ),
+      "import.meta.env.VITE_CHROME_EXTENSION_ID": JSON.stringify(
+        rootEnv.VITE_CHROME_EXTENSION_ID ?? localEnv.VITE_CHROME_EXTENSION_ID ?? "",
+      ),
     },
     plugins: [react(), tailwindcss()],
     resolve: {

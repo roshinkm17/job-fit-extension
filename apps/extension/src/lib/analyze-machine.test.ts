@@ -33,6 +33,7 @@ const LOADING_STATE: AnalysisState = {
   jobKey: buildJobKey(JOB_A),
   result: null,
   error: null,
+  errorCode: null,
 };
 
 describe("analysisReducer", () => {
@@ -45,6 +46,7 @@ describe("analysisReducer", () => {
     expect(next.jobKey).toBe(buildJobKey(JOB_A));
     expect(next.result).toBeNull();
     expect(next.error).toBeNull();
+    expect(next.errorCode).toBeNull();
   });
 
   it("SUCCESS moves to result when jobKey matches the in-flight request", () => {
@@ -62,9 +64,11 @@ describe("analysisReducer", () => {
       type: "FAILURE",
       jobKey: buildJobKey(JOB_A),
       error: "boom",
+      errorCode: "network",
     });
     expect(next.status).toBe("error");
     expect(next.error).toBe("boom");
+    expect(next.errorCode).toBe("network");
   });
 
   it("drops late SUCCESS for a superseded job", () => {
@@ -91,6 +95,7 @@ describe("analysisReducer", () => {
       jobKey: buildJobKey(JOB_A),
       result: RESULT,
       error: null,
+      errorCode: null,
     };
     const next = analysisReducer(settled, {
       type: "SUCCESS",
@@ -106,6 +111,7 @@ describe("analysisReducer", () => {
       jobKey: buildJobKey(JOB_A),
       result: null,
       error: "nope",
+      errorCode: "unknown",
     };
     expect(analysisReducer(settled, { type: "RESET" })).toEqual(INITIAL_ANALYSIS_STATE);
   });
