@@ -1,0 +1,13 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "buildCommand": "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm --filter @job-fit/shared build && pnpm --filter @job-fit/llm build && pnpm --filter @job-fit/backend build",
+    "watchPatterns": ["/apps/backend", "/packages", "/pnpm-lock.yaml", "/package.json"]
+  },
+  "deploy": {
+    "startCommand": "node apps/backend/dist/server.js",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 100,
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
