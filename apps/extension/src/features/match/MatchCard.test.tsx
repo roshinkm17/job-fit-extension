@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { AnalyzeResult, JobData } from "@job-fit/shared";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { type AnalysisState, INITIAL_ANALYSIS_STATE } from "../../lib/analyze-machine";
@@ -20,22 +20,26 @@ const RESULT: AnalyzeResult = {
   summary: "Strong fit overall with minor concerns.",
 };
 
+const WEB_APP_URL = "http://localhost:5173";
+
 afterEach(() => {
+  vi.useRealTimers();
   cleanup();
 });
 
 describe("MatchCard", () => {
-  it("does not render any Job Fit branding", () => {
+  it("does not render RoleGauge as inline card branding", () => {
     render(
       <MatchCard
         state={INITIAL_ANALYSIS_STATE}
         job={JOB}
         jobId="4404"
         jobReason={null}
+        webAppUrl={WEB_APP_URL}
         onCheck={() => {}}
       />,
     );
-    expect(screen.queryByText("Job Fit")).toBeNull();
+    expect(screen.queryByText("RoleGauge")).toBeNull();
   });
 
   it("idle: disables the button without a job and hides all metadata", () => {
@@ -45,6 +49,7 @@ describe("MatchCard", () => {
         job={null}
         jobId={null}
         jobReason="missing_title"
+        webAppUrl={WEB_APP_URL}
         onCheck={() => {}}
       />,
     );
@@ -60,10 +65,11 @@ describe("MatchCard", () => {
         job={JOB}
         jobId="4404"
         jobReason={null}
+        webAppUrl={WEB_APP_URL}
         onCheck={() => {}}
       />,
     );
-    const card = screen.getByTestId("job-fit-match-card");
+    const card = screen.getByTestId("rolegauge-match-card");
     expect(card.dataset.status).toBe("idle");
     // Idle has no separate header; only the row itself.
     expect(card.children.length).toBe(1);
@@ -81,6 +87,7 @@ describe("MatchCard", () => {
         job={JOB}
         jobId="4404"
         jobReason={null}
+        webAppUrl={WEB_APP_URL}
         onCheck={onCheck}
       />,
     );
@@ -96,7 +103,16 @@ describe("MatchCard", () => {
       error: null,
       errorCode: null,
     };
-    render(<MatchCard state={state} job={JOB} jobId="123" jobReason={null} onCheck={() => {}} />);
+    render(
+      <MatchCard
+        state={state}
+        job={JOB}
+        jobId="123"
+        jobReason={null}
+        webAppUrl={WEB_APP_URL}
+        onCheck={() => {}}
+      />,
+    );
     expect(screen.getByText(/scoring senior backend engineer/i)).toBeDefined();
   });
 
@@ -108,18 +124,27 @@ describe("MatchCard", () => {
       error: null,
       errorCode: null,
     };
-    render(<MatchCard state={state} job={JOB} jobId="123" jobReason={null} onCheck={() => {}} />);
+    render(
+      <MatchCard
+        state={state}
+        job={JOB}
+        jobId="123"
+        jobReason={null}
+        webAppUrl={WEB_APP_URL}
+        onCheck={() => {}}
+      />,
+    );
     expect(screen.getByRole("img", { name: /fit score 82 out of 100/i })).toBeDefined();
     expect(screen.getByText(/strong match/i)).toBeDefined();
     expect(screen.getByText(/strong fit overall/i)).toBeDefined();
     expect(screen.queryByRole("region", { name: /matches/i })).toBeNull();
     expect(screen.queryByRole("region", { name: /gaps/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /re-run/i })).toBeNull();
-    expect(screen.getByRole("listitem", { name: /match:\s*Node\.js/i })).toBeDefined();
-    expect(screen.getByRole("listitem", { name: /gap:\s*On-call/i })).toBeDefined();
+    expect(screen.getByRole("listitem", { name: "Node.js" })).toBeDefined();
+    expect(screen.getByRole("listitem", { name: "On-call" })).toBeDefined();
   });
 
-  it("result: surfaces tag detail via tooltip title", () => {
+  it("result: shows tag detail in a floating tooltip shortly after hover", async () => {
     const state: AnalysisState = {
       status: "result",
       jobKey: "k",
@@ -127,9 +152,21 @@ describe("MatchCard", () => {
       error: null,
       errorCode: null,
     };
-    render(<MatchCard state={state} job={JOB} jobId="123" jobReason={null} onCheck={() => {}} />);
-    const badge = screen.getByRole("listitem", { name: /match:\s*Node\.js/i });
-    expect(badge.getAttribute("title")).toBe("Stack match");
+    render(
+      <MatchCard
+        state={state}
+        job={JOB}
+        jobId="123"
+        jobReason={null}
+        webAppUrl={WEB_APP_URL}
+        onCheck={() => {}}
+      />,
+    );
+    const user = userEvent.setup();
+    await user.hover(screen.getByRole("listitem", { name: "Node.js" }));
+    await waitFor(() => {
+      expect(screen.getByText("Stack match")).toBeDefined();
+    });
   });
 
   it("error: renders message and fires onCheck when retry clicked", async () => {
@@ -141,10 +178,43 @@ describe("MatchCard", () => {
       error: "Backend unreachable",
       errorCode: "network",
     };
-    render(<MatchCard state={state} job={JOB} jobId="123" jobReason={null} onCheck={onCheck} />);
+    render(
+      <MatchCard
+        state={state}
+        job={JOB}
+        jobId="123"
+        jobReason={null}
+        webAppUrl={WEB_APP_URL}
+        onCheck={onCheck}
+      />,
+    );
     const alert = screen.getByRole("alert");
     expect(alert.textContent).toContain("Backend unreachable");
     await userEvent.click(screen.getByRole("button", { name: /retry match score/i }));
     expect(onCheck).toHaveBeenCalledTimes(1);
+  });
+
+  it("error: unauthenticated offers web app and try-again", () => {
+    const state: AnalysisState = {
+      status: "error",
+      jobKey: "k",
+      result: null,
+      error: "Connect the RoleGauge extension to your account before scoring.",
+      errorCode: "unauthenticated",
+    };
+    render(
+      <MatchCard
+        state={state}
+        job={JOB}
+        jobId="123"
+        jobReason={null}
+        webAppUrl="http://localhost:5173/prefs"
+        onCheck={() => {}}
+      />,
+    );
+    const link = screen.getByRole("link", { name: /open rolegauge/i });
+    expect(link.getAttribute("href")).toBe("http://localhost:5173/prefs");
+    expect(screen.getByText(/sign in to score jobs/i)).toBeDefined();
+    expect(screen.getByRole("button", { name: "Try again after signing in" })).toBeDefined();
   });
 });

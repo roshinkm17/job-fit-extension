@@ -2,7 +2,7 @@
   "name": "job-fit-extension",
   "private": true,
   "version": "0.0.0",
-  "description": "LinkedIn Job Fit: Chrome extension + Fastify backend + Vite prefs web app",
+  "description": "RoleGauge: LinkedIn job scoring extension, Fastify API, and preferences web app.",
   "packageManager": "pnpm@10.33.0",
   "engines": {
     "node": ">=22.0.0"

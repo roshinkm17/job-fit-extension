@@ -1,6 +1,6 @@
 /**
  * The web app and Vite may use `localhost` or `127.0.0.1` interchangeably. We
- * treat both as the same Job Fit app for external messaging + security checks.
+ * treat both as the same RoleGauge web app for external messaging + security checks.
  */
 export function isAllowedWebSender(pageUrl: string | undefined, webAppBaseUrl: string): boolean {
   if (!pageUrl) return false;

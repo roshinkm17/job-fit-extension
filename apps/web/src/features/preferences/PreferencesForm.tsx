@@ -1,5 +1,5 @@
 import type { UserPreferences, WorkMode } from "@job-fit/shared";
-import { Loader2Icon, LogOutIcon, SaveIcon } from "lucide-react";
+import { Loader2Icon, SaveIcon } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthProvider";
@@ -28,7 +28,7 @@ const WORK_MODES: { value: WorkMode; label: string }[] = [
 ];
 
 export function PreferencesForm() {
-  const { user, supabase, signOut } = useAuth();
+  const { user, supabase } = useAuth();
   const [preferences, setPreferences] = useState<UserPreferences>(EMPTY_PREFERENCES);
   const [dealBreakersDraft, setDealBreakersDraft] = useState("");
   const [loading, setLoading] = useState(true);
@@ -88,17 +88,14 @@ export function PreferencesForm() {
 
   return (
     <Card className="w-full max-w-2xl">
-      <CardHeader className="flex-row items-start justify-between gap-4">
+      <CardHeader>
         <div className="flex flex-col gap-1">
           <CardTitle>Your job preferences</CardTitle>
           <CardDescription>
-            Used to score LinkedIn jobs. No job data is ever stored — only these settings.
+            Used by RoleGauge to score LinkedIn jobs. No job data is ever stored — only these
+            settings.
           </CardDescription>
         </div>
-        <Button type="button" variant="ghost" size="sm" onClick={() => signOut()}>
-          <LogOutIcon data-icon="inline-start" />
-          Sign out
-        </Button>
       </CardHeader>
       <Separator />
       <CardContent>

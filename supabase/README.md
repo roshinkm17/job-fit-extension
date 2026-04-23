@@ -1,6 +1,6 @@
 # Supabase Setup (Phase 3)
 
-Project created for this repo:
+Project created for this repo (RoleGauge):
 
 - Name: `job-fit-extension`
 - Region: `ap-south-1`

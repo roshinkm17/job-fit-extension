@@ -1,6 +1,6 @@
 # @job-fit/extension
 
-Chrome extension (Manifest V3, Plasmo + React 18) that reads LinkedIn job pages
+RoleGauge — Chrome extension (Manifest V3, Plasmo + React 18) that reads LinkedIn job pages
 and scores them against the user’s saved preferences via the Fastify
 `POST /analyze` API.
 

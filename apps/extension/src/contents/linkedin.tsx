@@ -5,6 +5,7 @@ import { MatchCard } from "../features/match/MatchCard";
 import { analyzeForContent } from "../lib/analyze";
 import { analysisReducer, buildJobKey, INITIAL_ANALYSIS_STATE } from "../lib/analyze-machine";
 import { AnalyzeError } from "../lib/api-errors";
+import { readEnv } from "../lib/env";
 import { extractJobData } from "../lib/extractor";
 import { logger } from "../lib/logger";
 import { createJobContextWatcher, type JobContextChange } from "../lib/observer";
@@ -63,8 +64,9 @@ interface ExtractionState {
 }
 
 const INITIAL_EXTRACTION: ExtractionState = { job: null, jobId: null, reason: null };
+const { webAppUrl: WEB_APP_URL } = readEnv();
 
-export default function JobFitContent(): JSX.Element {
+export default function RoleGaugeContent(): JSX.Element {
   const [extraction, setExtraction] = useState<ExtractionState>(INITIAL_EXTRACTION);
   const [analysis, dispatch] = useReducer(analysisReducer, INITIAL_ANALYSIS_STATE);
   const abortRef = useRef<AbortController | null>(null);
@@ -126,6 +128,7 @@ export default function JobFitContent(): JSX.Element {
       job={extraction.job}
       jobId={extraction.jobId}
       jobReason={extraction.reason}
+      webAppUrl={WEB_APP_URL}
       onCheck={onCheck}
     />
   );

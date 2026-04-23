@@ -1,4 +1,4 @@
-# Job Fit Extension
+# RoleGauge
 
 A Chrome extension that augments LinkedIn job pages with a real-time, LLM-driven fit analysis tailored to saved user preferences.
 

@@ -130,7 +130,7 @@ describe("buildPrompt", () => {
       userPreferences: prefs,
     });
 
-    expect(system).toMatch(/job-fit evaluation engine/);
+    expect(system).toMatch(/RoleGauge evaluation engine/);
     expect(user).toMatch(/Senior Backend Engineer/);
     expect(user).toMatch(/node\.js/);
     expect(user).toMatch(/Respond with JSON only\./);

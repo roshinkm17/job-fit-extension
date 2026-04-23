@@ -1,9 +1,9 @@
 {
   "name": "@job-fit/extension",
-  "displayName": "Job Fit",
+  "displayName": "RoleGauge",
   "version": "0.0.1",
   "private": true,
-  "description": "Real-time LinkedIn job fit analysis overlay.",
+  "description": "Score LinkedIn job posts against your saved preferences (RoleGauge).",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
@@ -33,8 +33,8 @@
     "vitest": "^4.1.5"
   },
   "manifest": {
-    "name": "Job Fit",
-    "description": "See how well a LinkedIn job matches your saved preferences.",
+    "name": "RoleGauge",
+    "description": "See how well a LinkedIn job post matches your RoleGauge preferences.",
     "host_permissions": [
       "https://*.linkedin.com/*",
       "http://localhost:3000/*",

@@ -1,6 +1,6 @@
 # @job-fit/backend
 
-Stateless Fastify service that powers the `POST /analyze` endpoint for the Job Fit
+Stateless Fastify service that powers the `POST /analyze` endpoint for RoleGauge
 extension. It verifies the caller's Supabase JWT, loads their preferences under RLS,
 builds a deterministic prompt, and calls the LLM adapter.
 

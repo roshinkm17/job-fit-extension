@@ -17,7 +17,7 @@ export interface PromptOutput {
   user: string;
 }
 
-const SYSTEM_PROMPT = `You are a job-fit evaluation engine.
+const SYSTEM_PROMPT = `You are a RoleGauge evaluation engine.
 
 Your job: compare a candidate's saved preferences against a job description and produce a structured fit analysis.
 

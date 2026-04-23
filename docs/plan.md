@@ -1,6 +1,6 @@
 ---
-name: Job Fit Extension
-overview: "Greenfield monorepo for a LinkedIn Job Fit Chrome extension: a Plasmo/React extension with a manual 'Check Match Score' button, a lean Fastify backend exposing POST /analyze, a Vite + React + shadcn/ui prefs web app, and Supabase for auth + prefs storage. LLM calls go through a provider-agnostic adapter. Prefs are owned by the backend; the extension only stores the Supabase session token."
+name: RoleGauge
+overview: "Greenfield monorepo for RoleGauge: a Plasmo/React LinkedIn extension with a manual 'Check Match Score' button, a lean Fastify backend exposing POST /analyze, a Vite + React + shadcn/ui prefs web app, and Supabase for auth + prefs storage. LLM calls go through a provider-agnostic adapter. Prefs are owned by the backend; the extension only stores the Supabase session token."
 todos:
   - id: scaffold
     content: Scaffold pnpm monorepo with apps/extension, apps/web, apps/backend, packages/shared, packages/llm; TypeScript + Tailwind baseline

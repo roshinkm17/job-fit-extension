@@ -52,7 +52,7 @@ export function SignInCard() {
         <CardTitle>{mode === "sign-in" ? "Welcome back" : "Create your account"}</CardTitle>
         <CardDescription>
           {mode === "sign-in"
-            ? "Sign in to manage the preferences used for job fit analysis."
+            ? "Sign in to set the preferences used by RoleGauge to score jobs on LinkedIn."
             : "Your preferences are private to you and guarded by Supabase RLS."}
         </CardDescription>
       </CardHeader>

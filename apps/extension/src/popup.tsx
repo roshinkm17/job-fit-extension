@@ -34,7 +34,7 @@ export default function Popup(): JSX.Element {
           Signed in as <strong>{email}</strong>
         </p>
       ) : (
-        <p style={{ margin: 0, color: "#64748b" }}>Not signed in to Job Fit.</p>
+        <p style={{ margin: 0, color: "#64748b" }}>Not signed in to RoleGauge.</p>
       )}
       <a
         href={web}
@@ -48,7 +48,7 @@ export default function Popup(): JSX.Element {
           textDecoration: "none",
         }}
       >
-        Open Job Fit web app
+        Open RoleGauge web app
       </a>
     </div>
   );

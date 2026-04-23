@@ -1,4 +1,6 @@
 import type { AnalyzeTag } from "@job-fit/shared";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Icon, type IconName } from "./Icon";
 import { TOKENS } from "./theme";
 
@@ -15,10 +17,16 @@ export interface BadgeStripProps {
   readonly gaps: readonly AnalyzeTag[];
 }
 
+const TOOLTIP_SHOW_MS = 120;
+const TOOLTIP_ID = "rolegauge-badge-tooltip";
+const TOOLTIP_MAX_WIDTH = 220;
+const GAP = 6;
+const EST_HEIGHT = 48;
+
 /**
- * Single wrapping list of colored match/gap badges. Matches render green with
- * a check icon, gaps render red with a cross. Order is stable (matches first,
- * then gaps) so the visual hierarchy leads with the positive signal.
+ * Colored match/gap badges. Detail text appears in a small floating tooltip
+ * (portaled to `document.body` so the card’s overflow does not clip it), with
+ * a short show delay.
  */
 export function BadgeStrip({ matches, gaps }: BadgeStripProps): JSX.Element | null {
   const badges: readonly Badge[] = [
@@ -28,28 +36,131 @@ export function BadgeStrip({ matches, gaps }: BadgeStripProps): JSX.Element | nu
 
   if (badges.length === 0) return null;
 
+  return <BadgeStripInner badges={badges} />;
+}
+
+interface TooltipState {
+  readonly text: string;
+  readonly top: number;
+  readonly left: number;
+  readonly transform: "translateY(-100%)" | "none";
+  readonly targetIndex: number;
+}
+
+function BadgeStripInner({ badges }: { readonly badges: readonly Badge[] }): JSX.Element {
+  const [tip, setTip] = useState<TooltipState | null>(null);
+  const showTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function clearShowTimer() {
+    if (showTimer.current) {
+      clearTimeout(showTimer.current);
+      showTimer.current = null;
+    }
+  }
+
+  useEffect(() => {
+    if (!tip) return;
+    function hide() {
+      setTip(null);
+    }
+    globalThis.addEventListener("scroll", hide, true);
+    globalThis.addEventListener("resize", hide);
+    return () => {
+      globalThis.removeEventListener("scroll", hide, true);
+      globalThis.removeEventListener("resize", hide);
+    };
+  }, [tip]);
+
+  function onLeaveBadge() {
+    clearShowTimer();
+    setTip(null);
+  }
+
+  function onEnterBadge(detail: string | undefined, index: number, el: HTMLElement) {
+    clearShowTimer();
+    if (!detail) return;
+    showTimer.current = setTimeout(() => {
+      const r = el.getBoundingClientRect();
+      const w = globalThis.innerWidth;
+      const left = Math.max(4, Math.min(r.left, w - 4 - TOOLTIP_MAX_WIDTH));
+      const spaceAbove = r.top;
+      if (spaceAbove > EST_HEIGHT + GAP) {
+        setTip({
+          text: detail,
+          top: r.top - GAP,
+          left,
+          transform: "translateY(-100%)",
+          targetIndex: index,
+        });
+      } else {
+        setTip({
+          text: detail,
+          top: r.bottom + GAP,
+          left,
+          transform: "none",
+          targetIndex: index,
+        });
+      }
+    }, TOOLTIP_SHOW_MS);
+  }
+
+  const portal =
+    tip &&
+    typeof document !== "undefined" &&
+    createPortal(
+      <div
+        id={TOOLTIP_ID}
+        role="tooltip"
+        style={{
+          position: "fixed",
+          top: tip.top,
+          left: tip.left,
+          transform: tip.transform,
+          zIndex: 2147483647,
+          maxWidth: TOOLTIP_MAX_WIDTH,
+          padding: `${TOKENS.space.xs}px ${TOKENS.space.s}px`,
+          borderRadius: TOKENS.radius.s,
+          border: `1px solid ${TOKENS.color.border}`,
+          background: TOKENS.color.bg,
+          color: TOKENS.color.fgMuted,
+          fontSize: TOKENS.font.size.s,
+          lineHeight: 1.5,
+          boxShadow: "0 4px 12px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.04)",
+          fontFamily: TOKENS.font.family,
+          pointerEvents: "none",
+        }}
+      >
+        {tip.text}
+      </div>,
+      document.body,
+    );
+
   return (
-    <ul
-      aria-label="Match signals"
-      style={{
-        margin: 0,
-        padding: 0,
-        listStyle: "none",
-        display: "flex",
-        flexWrap: "wrap",
-        gap: TOKENS.space.xs,
-      }}
-    >
-      {badges.map((badge, index) => (
-        <MatchBadge
-          badge={badge}
-          // Static list per render; content + index is the most stable key we
-          // can synthesise without mutating the backend response.
-          // biome-ignore lint/suspicious/noArrayIndexKey: stable list; see comment above
-          key={`${badge.kind}:${badge.label}:${index}`}
-        />
-      ))}
-    </ul>
+    <div>
+      <ul
+        aria-label="Match details"
+        style={{
+          margin: 0,
+          padding: 0,
+          listStyle: "none",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: TOKENS.space.xs,
+        }}
+      >
+        {badges.map((badge, index) => (
+          <MatchBadge
+            // biome-ignore lint/suspicious/noArrayIndexKey: stable list per render; labels can repeat across kinds
+            key={`${badge.kind}:${badge.label}:${index}`}
+            badge={badge}
+            isDescribed={tip !== null && tip.targetIndex === index}
+            onEnter={(el) => onEnterBadge(badge.detail, index, el)}
+            onLeave={onLeaveBadge}
+          />
+        ))}
+      </ul>
+      {portal}
+    </div>
   );
 }
 
@@ -80,16 +191,21 @@ const PALETTES: Record<BadgeKind, Palette> = {
 
 interface MatchBadgeProps {
   readonly badge: Badge;
+  readonly isDescribed: boolean;
+  readonly onEnter: (el: HTMLElement) => void;
+  readonly onLeave: () => void;
 }
 
-function MatchBadge({ badge }: MatchBadgeProps): JSX.Element {
+function MatchBadge({ badge, isDescribed, onEnter, onLeave }: MatchBadgeProps): JSX.Element {
   const palette = PALETTES[badge.kind];
-  const ariaLabel = `${badge.kind === "match" ? "Match" : "Gap"}: ${badge.label}`;
+  const hasDetail = Boolean(badge.detail);
 
   return (
     <li
-      aria-label={ariaLabel}
-      title={badge.detail}
+      aria-describedby={isDescribed ? TOOLTIP_ID : undefined}
+      aria-label={badge.label}
+      onPointerEnter={hasDetail ? (e) => onEnter(e.currentTarget) : undefined}
+      onPointerLeave={hasDetail ? onLeave : undefined}
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -102,7 +218,7 @@ function MatchBadge({ badge }: MatchBadgeProps): JSX.Element {
         fontSize: TOKENS.font.size.s,
         fontWeight: TOKENS.font.weight.semibold,
         lineHeight: 1.6,
-        cursor: badge.detail ? "help" : "default",
+        cursor: hasDetail ? "help" : "default",
       }}
     >
       <Icon name={palette.icon} size={12} color={palette.iconColor} />

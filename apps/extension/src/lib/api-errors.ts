@@ -28,12 +28,12 @@ export class AnalyzeError extends Error {
 
 /** User-facing one-liner for each error code; the UI can override when it wants. */
 export const DEFAULT_MESSAGES: Record<AnalyzeErrorCode, string> = {
-  unauthenticated: "Connect the Job Fit extension to your account before scoring.",
+  unauthenticated: "Connect the RoleGauge extension to your account before scoring.",
   preferences_missing: "Save your job preferences before scoring.",
   invalid_request: "We couldn't read this job posting. Try scrolling to load it fully.",
   llm_failure: "Our scoring model hit an error. Try again in a moment.",
-  network: "Couldn't reach the Job Fit backend. Check your connection.",
-  server_error: "The Job Fit backend returned an error. Try again shortly.",
+  network: "Couldn't reach the RoleGauge backend. Check your connection.",
+  server_error: "The RoleGauge backend returned an error. Try again shortly.",
   invalid_response: "The backend returned an unexpected response.",
   aborted: "Scoring was cancelled.",
   unknown: "Something went wrong. Try again in a moment.",

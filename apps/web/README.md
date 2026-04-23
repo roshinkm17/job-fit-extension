@@ -1,7 +1,7 @@
 # @job-fit/web
 
 Vite + React + TypeScript + shadcn/ui preferences app. Authenticates users with
-Supabase email/password and lets them manage the preferences used for job fit
+Supabase email/password and lets them manage the preferences used by RoleGauge
 scoring.
 
 ## Stack

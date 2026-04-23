@@ -12,6 +12,8 @@ export interface MatchCardProps {
   readonly job: JobData | null;
   readonly jobId: string | null;
   readonly jobReason: string | null;
+  /** Prefs / login web app; used for unauthenticated error actions. */
+  readonly webAppUrl: string;
   readonly onCheck: () => void;
 }
 
@@ -21,7 +23,14 @@ export interface MatchCardProps {
  * and tested in isolation. The card always fills the width of its container
  * so it feels native on LinkedIn's job pane.
  */
-export function MatchCard({ state, job, jobId, jobReason, onCheck }: MatchCardProps): JSX.Element {
+export function MatchCard({
+  state,
+  job,
+  jobId,
+  jobReason,
+  webAppUrl,
+  onCheck,
+}: MatchCardProps): JSX.Element {
   // Idle collapses to a single row (ID, location, caption, button) so the
   // widget stays unobtrusive until the user opts into scoring. Every other
   // state renders the full header + body.
@@ -29,13 +38,13 @@ export function MatchCard({ state, job, jobId, jobReason, onCheck }: MatchCardPr
 
   return (
     <section
-      aria-label="Job match summary"
-      data-testid="job-fit-match-card"
+      aria-label="RoleGauge job match summary"
+      data-testid="rolegauge-match-card"
       data-status={state.status}
       style={CARD_STYLE}
     >
       {showHeader ? <CardHeader jobId={jobId} location={job?.location ?? ""} /> : null}
-      {renderBody({ state, job, jobId, jobReason, onCheck })}
+      {renderBody({ state, job, jobId, jobReason, webAppUrl, onCheck })}
     </section>
   );
 }
@@ -73,8 +82,12 @@ function renderBody({
   job,
   jobId,
   jobReason,
+  webAppUrl,
   onCheck,
-}: Pick<MatchCardProps, "state" | "job" | "jobId" | "jobReason" | "onCheck">): JSX.Element {
+}: Pick<
+  MatchCardProps,
+  "state" | "job" | "jobId" | "jobReason" | "webAppUrl" | "onCheck"
+>): JSX.Element {
   switch (state.status) {
     case "idle":
       return <IdleView job={job} jobId={jobId} jobReason={jobReason} onCheck={onCheck} />;
@@ -91,7 +104,14 @@ function renderBody({
         <IdleView job={job} jobId={jobId} jobReason={jobReason} onCheck={onCheck} />
       );
     case "error":
-      return <ErrorView message={state.error ?? "Unknown error"} onRetry={onCheck} />;
+      return (
+        <ErrorView
+          message={state.error ?? "Unknown error"}
+          errorCode={state.errorCode}
+          webAppUrl={webAppUrl}
+          onRetry={onCheck}
+        />
+      );
     default: {
       const never: never = state.status;
       return never;

@@ -31,7 +31,7 @@ export function LoadingView({ job }: LoadingViewProps): JSX.Element {
           borderRadius: "50%",
           border: `2px solid ${TOKENS.color.borderSubtle}`,
           borderTopColor: TOKENS.color.primary,
-          animation: "job-fit-spin 720ms linear infinite",
+          animation: "rolegauge-spin 720ms linear infinite",
           flex: `0 0 ${SPINNER_SIZE}px`,
         }}
       />
@@ -62,7 +62,7 @@ export function LoadingView({ job }: LoadingViewProps): JSX.Element {
 }
 
 const SPINNER_CSS = `
-  @keyframes job-fit-spin {
+  @keyframes rolegauge-spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
   }

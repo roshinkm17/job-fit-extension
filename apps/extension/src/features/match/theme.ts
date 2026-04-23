@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 
 /**
- * Design tokens for the Job Fit overlay. Lives inside a Plasmo shadow DOM so
+ * Design tokens for the RoleGauge overlay. Lives inside a Plasmo shadow DOM so
  * we can't rely on page styles cascading in. Everything the UI needs is
  * reachable from here, making style changes audit-friendly.
  */
@@ -39,8 +39,8 @@ export const CARD_STYLE: CSSProperties = {
   fontFamily: TOKENS.font.family,
   background: TOKENS.color.bg,
   border: `1px solid ${TOKENS.color.border}`,
-  borderRadius: TOKENS.radius.xl,
-  margin: `${TOKENS.space.m}px 0`,
+  borderRadius: 8,
+  margin: `${TOKENS.space.m}px 0 2rem`,
   boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
   color: TOKENS.color.fg,
   fontSize: TOKENS.font.size.m,

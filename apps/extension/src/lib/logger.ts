@@ -1,4 +1,4 @@
-const TAG = "[Job Fit]";
+const TAG = "[RoleGauge]";
 
 export const logger = {
   info(...args: unknown[]): void {
