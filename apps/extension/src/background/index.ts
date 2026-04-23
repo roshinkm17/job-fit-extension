@@ -2,11 +2,25 @@ import { readEnv } from "../lib/env";
 import { getExtensionSupabase } from "../lib/supabase";
 import { isAllowedWebSender } from "../lib/web-app-origin";
 
-const env = readEnv();
-
+/**
+ * Never call `readEnv()` at the top level of the service worker. If the
+ * built bundle is missing `PLASMO_PUBLIC_*` (e.g. no `apps/extension/.env`
+ * when running `plasmo build`), a synchronous throw prevents registration
+ * and Chrome reports "Service worker registration failed. Status code: 15".
+ * We only read config when a message arrives so the worker still registers;
+ * a missing config returns a clear error to the web app instead.
+ */
 chrome.runtime.onMessageExternal.addListener(
   (raw: unknown, sender, sendResponse: (r: { ok: boolean; error?: string }) => void) => {
-    if (!isAllowedWebSender(sender.url, env.webAppUrl)) {
+    let webAppUrl: string;
+    try {
+      webAppUrl = readEnv().webAppUrl;
+    } catch {
+      sendResponse({ ok: false, error: "extension_env_missing" });
+      return false;
+    }
+
+    if (!isAllowedWebSender(sender.url, webAppUrl)) {
       sendResponse({ ok: false, error: "forbidden" });
       return;
     }
