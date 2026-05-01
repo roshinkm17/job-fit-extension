@@ -20,6 +20,64 @@ export type ExtractResult =
 
 const LOCATION_SHAPE = /\b(remote|hybrid|on[-\s]?site)\b|[,，]/i;
 
+const TITLE_NOISE = /^(linkedin|jobs)$/i;
+
+function isHeadingLike(el: Element): boolean {
+  const tag = el.tagName;
+  if (tag === "H1" || tag === "H2" || tag === "H3") return true;
+  return el.getAttribute("role") === "heading";
+}
+
+function pickHeadingFromSubtree(sib: Element): string | null {
+  if (isHeadingLike(sib)) {
+    const t = normalizeWhitespace(sib.textContent);
+    if (t.length >= 2 && !TITLE_NOISE.test(t)) return t;
+  }
+  const inner = sib.querySelector("h1, h2, h3, [role='heading']");
+  if (!inner) return null;
+  const t = normalizeWhitespace(inner.textContent);
+  return t.length >= 2 && !TITLE_NOISE.test(t) ? t : null;
+}
+
+/** Walk upward from `[aria-label^="Company,"]` — SDUI titles are often siblings (h2) before logo row. */
+function titleAdjacentToCompany(workspace: Element): string {
+  const company = workspace.querySelector('[aria-label^="Company,"]');
+  if (!(company instanceof Element)) return "";
+
+  let depth = 0;
+  let node: Element | null = company;
+  while (node && depth < 30) {
+    for (let sib = node.previousElementSibling; sib; sib = sib.previousElementSibling) {
+      const picked = pickHeadingFromSubtree(sib);
+      if (picked) return picked;
+    }
+    node = node.parentElement;
+    depth += 1;
+  }
+  return "";
+}
+
+/** Pick the richest heading under workspace when markup no longer exposes job-title-specific classes. */
+function fallbackHeadingInWorkspace(workspace: Element): string {
+  let best = "";
+  const nodes = workspace.querySelectorAll("h1, h2, h3, [role='heading']");
+  for (const el of nodes) {
+    if (!isHeadingLike(el)) continue;
+    const t = normalizeWhitespace(el.textContent);
+    if (t.length < 3 || t.length > 200) continue;
+    const lower = t.toLowerCase();
+    if (
+      TITLE_NOISE.test(t) ||
+      lower === "linkedin" ||
+      lower.startsWith("sign in") ||
+      lower.includes("cookie")
+    )
+      continue;
+    if (t.length > best.length) best = t;
+  }
+  return best;
+}
+
 function queryFirst(root: ParentNode, selectors: readonly string[]): Element | null {
   for (const selector of selectors) {
     const match = root.querySelector(selector);
@@ -40,6 +98,11 @@ function resolveJobExtractScope(document: Document): Element {
     return workspace;
   }
   return queryFirst(document, JOB_ROOT_SELECTORS) ?? document.body;
+}
+
+/** Job column often lives inside `main#workspace` even when `scope` is a narrower subtree root. */
+function resolveWorkspaceAncestor(scope: Element): Element | null {
+  return scope.id === "workspace" ? scope : scope.closest("#workspace");
 }
 
 function textFrom(root: ParentNode, selectors: readonly string[]): string {
@@ -94,13 +157,14 @@ function locationNearCompanyBlock(scope: ParentNode): string | null {
   return null;
 }
 
-/** Main jobs workspace often exposes exactly one headline <h1> for the vacancy. */
+/** First `h1` on the workspace `<main>` (often absent on hashed SDUI — see fallbacks). */
 function titleFromWorkspaceRoot(root: ParentNode): string {
   if (!(root instanceof Element)) return "";
   if (root.id !== "workspace") return "";
 
   const h1 = root.querySelector("h1");
-  return normalizeWhitespace(h1?.textContent ?? "");
+  const t = normalizeWhitespace(h1?.textContent ?? "");
+  return TITLE_NOISE.test(t) ? "" : t;
 }
 
 /**
@@ -111,7 +175,13 @@ export function extractJobData(document: Document): ExtractResult {
   const scope = resolveJobExtractScope(document);
   if (!scope) return { ok: false, reason: "missing-root" };
 
-  const title = textFrom(scope, JOB_TITLE_SELECTORS) || titleFromWorkspaceRoot(scope);
+  const wk = scope instanceof Element ? resolveWorkspaceAncestor(scope) : null;
+  const titleRoot = wk ?? scope;
+  const title =
+    textFrom(scope, JOB_TITLE_SELECTORS) ||
+    (wk ? titleAdjacentToCompany(wk) : "") ||
+    titleFromWorkspaceRoot(titleRoot) ||
+    (wk ? fallbackHeadingInWorkspace(wk) : "");
   if (!title) return { ok: false, reason: "missing-title" };
 
   const company = textFrom(scope, JOB_COMPANY_SELECTORS);

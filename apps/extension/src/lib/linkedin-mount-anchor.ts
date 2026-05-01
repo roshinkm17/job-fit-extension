@@ -48,11 +48,11 @@ export const LINKEDIN_INLINE_ANCHOR_CANDIDATES: ReadonlyArray<{
   readonly insertPosition?: AnchorInsertPosition;
 }> = [
   /**
-   * Header company row re-renders often; the about-job SDUI host tends to stay
-   * attached once the description shell mounts (better for Plasmo anchoring).
+   * NEVER anchor on `aboutTheJob` alongside `Company`: LinkedIn renders the
+   * company/header row first — Plasmo mounts there — then `aboutTheJob` mounts
+   * later while `aboutTheJob` ranks first in the candidate list → Plasmo
+   * attaches a *second* inline host. Prefer `Company` only for a single anchor.
    */
-  { selector: 'main#workspace [data-sdui-component*="aboutTheJob"]' },
-  { selector: '[data-sdui-component*="aboutTheJob"]' },
   { selector: 'main#workspace [aria-label^="Company,"]' },
   { selector: '[aria-label^="Company,"]' },
   { selector: ".job-details-jobs-unified-top-card__container--two-pane" },

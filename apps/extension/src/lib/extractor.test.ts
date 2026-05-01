@@ -8,6 +8,7 @@ import {
 } from "./fixtures/linkedin-modern";
 import { LINKEDIN_SDUI_JOB_FIXTURE } from "./fixtures/linkedin-sdui";
 import { LINKEDIN_SDUI_PHANTOM_LEGACY_ROOT_FIXTURE } from "./fixtures/linkedin-sdui-phantom-root";
+import { LINKEDIN_SDUI_TITLE_H2_FIXTURE } from "./fixtures/linkedin-sdui-title-h2";
 
 function parseFixture(html: string): Document {
   return new DOMParser().parseFromString(html, "text/html");
@@ -32,6 +33,14 @@ describe("extractJobData", () => {
     expect(result.job.description).toContain("Senior Backend Engineer");
     expect(result.job.description).toContain("6+ years of production experience");
     expect(result.job.description).toContain("Remote-first, US time zones");
+  });
+
+  it("extracts job title when only an h2 precedes company (hashed SDUI header)", () => {
+    const result = extractJobData(parseFixture(LINKEDIN_SDUI_TITLE_H2_FIXTURE));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.job.title).toBe("Senior Platform Engineer");
+    expect(result.job.company).toBe("Stripe");
   });
 
   it("scopes extraction to #workspace when a phantom legacy shell precedes SDUI markup", () => {

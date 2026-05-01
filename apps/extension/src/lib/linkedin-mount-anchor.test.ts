@@ -34,9 +34,10 @@ describe("findLinkedInMountAnchor", () => {
     expect(el?.classList.contains("jobs-unified-top-card")).toBe(true);
   });
 
-  it("prefers aboutTheJob SDUI host as mount anchor when present", () => {
+  it("uses company aria as the single stable mount anchor for SDUI (not about-the-job)", () => {
     const doc = parse(LINKEDIN_SDUI_JOB_FIXTURE);
     const el = findLinkedInMountAnchor(doc);
-    expect(el?.getAttribute("data-sdui-component")?.includes("aboutTheJob")).toBe(true);
+    expect(el?.getAttribute("aria-label")?.startsWith("Company,")).toBe(true);
+    expect(el?.closest("#workspace")).toBeTruthy();
   });
 });
