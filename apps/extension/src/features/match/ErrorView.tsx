@@ -104,13 +104,23 @@ export function ErrorView({ message, errorCode, webAppUrl, onRetry }: ErrorViewP
           >
             Open RoleGauge
           </a>
-          <PrimaryButton
-            onClick={onRetry}
-            aria-label="Try again after signing in"
-            variant="secondary"
+          <span
+            onPointerDown={(event) => {
+              event.stopPropagation();
+            }}
           >
-            I signed in — try again
-          </PrimaryButton>
+            <PrimaryButton
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onRetry();
+              }}
+              aria-label="Try again after signing in"
+              variant="secondary"
+            >
+              I signed in — try again
+            </PrimaryButton>
+          </span>
         </div>
       </div>
     );
@@ -167,9 +177,22 @@ export function ErrorView({ message, errorCode, webAppUrl, onRetry }: ErrorViewP
           {message}
         </p>
       </div>
-      <PrimaryButton onClick={onRetry} aria-label="Retry match score">
-        Retry
-      </PrimaryButton>
+      <span
+        onPointerDown={(event) => {
+          event.stopPropagation();
+        }}
+      >
+        <PrimaryButton
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onRetry();
+          }}
+          aria-label="Retry match score"
+        >
+          Retry
+        </PrimaryButton>
+      </span>
     </div>
   );
 }

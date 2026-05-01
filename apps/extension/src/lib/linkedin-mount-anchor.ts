@@ -68,6 +68,40 @@ export const LINKEDIN_INLINE_ANCHOR_CANDIDATES: ReadonlyArray<{
    */
 ] as const;
 
+/**
+ * LinkedIn often wraps the company block in `<a href=".../company/.../life/">`
+ * and places that link inside an action row with a "More options" button. Mount
+ * before that whole row so `<plasmo-csui>` is a direct sibling above it.
+ */
+export function hoistMountAboveLinkedInCompanyActionRow(hit: Element): Element {
+  let companyHrefWrapper: Element | null = null;
+  for (let el = hit.parentElement; el; el = el.parentElement) {
+    if (el.tagName === "DIV" && hasDirectMoreOptionsButton(el)) return el;
+    if (el.tagName === "A" && isLinkedInCompanyProfileHref(el)) {
+      companyHrefWrapper ??= el;
+    }
+  }
+  return companyHrefWrapper ?? hit;
+}
+
+function hasDirectMoreOptionsButton(element: Element): boolean {
+  for (const child of element.children) {
+    if (child.matches('button[aria-label="More options"]')) return true;
+  }
+  return false;
+}
+
+function isLinkedInCompanyProfileHref(anchor: Element): boolean {
+  const raw = anchor.getAttribute("href")?.trim();
+  if (!raw) return false;
+  try {
+    const url = new URL(raw, "https://www.linkedin.com/");
+    return url.pathname.includes("/company/");
+  } catch {
+    return false;
+  }
+}
+
 export function resolveLinkedInMountAnchor(root: ParentNode = document): {
   readonly element: Element;
   readonly selector: string;
@@ -76,10 +110,13 @@ export function resolveLinkedInMountAnchor(root: ParentNode = document): {
   for (const candidate of LINKEDIN_INLINE_ANCHOR_CANDIDATES) {
     const match = root.querySelector(candidate.selector);
     if (match) {
+      const insertPosition = candidate.insertPosition ?? "beforebegin";
+      const element =
+        insertPosition === "beforebegin" ? hoistMountAboveLinkedInCompanyActionRow(match) : match;
       return {
-        element: match,
+        element,
         selector: candidate.selector,
-        insertPosition: candidate.insertPosition ?? "beforebegin",
+        insertPosition,
       };
     }
   }

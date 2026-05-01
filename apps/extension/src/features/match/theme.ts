@@ -48,6 +48,8 @@ export const CARD_STYLE: CSSProperties = {
   width: "100%",
   boxSizing: "border-box",
   overflow: "hidden",
+  position: "relative",
+  zIndex: 1,
 };
 
 export const CARD_HEADER_STYLE: CSSProperties = {

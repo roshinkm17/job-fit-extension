@@ -1,4 +1,5 @@
 import type { JobData } from "@job-fit/shared";
+import type { SyntheticEvent } from "react";
 import { PrimaryButton } from "./PrimaryButton";
 import { ID_PILL_STYLE, TOKENS } from "./theme";
 
@@ -18,8 +19,19 @@ export interface IdleViewProps {
 export function IdleView({ job, jobId, onCheck }: IdleViewProps): JSX.Element {
   const canCheck = Boolean(job);
 
+  const stopPageLinkTakeover = (
+    event: Pick<SyntheticEvent, "preventDefault" | "stopPropagation">,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   return (
     <div
+      onPointerDown={(event) => {
+        // LinkedIn often wraps the anchor block in `<a href="/company/...">`; don't let that steal clicks.
+        event.stopPropagation();
+      }}
       style={{
         display: "flex",
         alignItems: "center",
@@ -29,7 +41,15 @@ export function IdleView({ job, jobId, onCheck }: IdleViewProps): JSX.Element {
       }}
     >
       {jobId ? <span style={ID_PILL_STYLE}>ID: {jobId}</span> : <span />}
-      <PrimaryButton onClick={onCheck} disabled={!canCheck} aria-label="Check match score">
+      <PrimaryButton
+        disabled={!canCheck}
+        aria-label="Check match score"
+        onClick={(event) => {
+          stopPageLinkTakeover(event);
+          if (!canCheck) return;
+          onCheck();
+        }}
+      >
         Check match score
       </PrimaryButton>
     </div>
