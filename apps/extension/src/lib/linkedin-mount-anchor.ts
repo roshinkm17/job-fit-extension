@@ -10,6 +10,36 @@ export function shouldLogMountAnchorDiagnostics(): boolean {
 export type AnchorInsertPosition = "beforebegin" | "afterbegin" | "beforeend" | "afterend";
 
 /**
+ * Plasmo can invoke `getInlineAnchor` repeatedly when the subtree mutates.
+ * Diagnostics would spam the console; log at most once per URL + selector phase.
+ */
+let lastMountDiagnosticFingerprint = "";
+
+/** Test hook: clears dedupe state between specs when needed. */
+export function __resetMountDiagnosticFingerprintForTests(): void {
+  lastMountDiagnosticFingerprint = "";
+}
+
+export function logMountDiagOnce(
+  phase: "immediate" | "after-dom",
+  selector: string,
+  insertPosition: AnchorInsertPosition,
+): void {
+  if (!shouldLogMountAnchorDiagnostics()) return;
+
+  let hrefPart = "";
+  if (typeof globalThis.window !== "undefined" && globalThis.window.location) {
+    hrefPart = `${globalThis.window.location.pathname}${globalThis.window.location.search}`;
+  }
+  const fingerprint = `${hrefPart}|${phase}|${selector}|${insertPosition}`;
+  if (fingerprint === lastMountDiagnosticFingerprint) return;
+  lastMountDiagnosticFingerprint = fingerprint;
+
+  const when = phase === "immediate" ? "immediate" : "after DOM update";
+  logger.info(`[anchor] mounting inline UI (${when}): ${selector} (${insertPosition})`);
+}
+
+/**
  * Stable hooks first — LinkedIn hashed classes are unreliable. `insertPosition`
  * defaults to `beforebegin`; `afterbegin` on `#workspace` keeps UI inside SPA shell.
  */

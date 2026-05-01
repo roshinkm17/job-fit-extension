@@ -9,6 +9,7 @@ import { readEnv } from "../lib/env";
 import { extractJobData } from "../lib/extractor";
 import {
   logLinkedInMountAnchorProbe,
+  logMountDiagOnce,
   resolveLinkedInMountAnchor,
   shouldLogMountAnchorDiagnostics,
 } from "../lib/linkedin-mount-anchor";
@@ -20,6 +21,9 @@ export const config: PlasmoCSConfig = {
   run_at: "document_idle",
 };
 
+/** Avoid spamming LinkedIn SPA mutation bursts (same reason/jobId/trigger combos). */
+let lastWaitingDomLogFingerprint = "";
+
 interface InlineAnchor {
   readonly element: Element;
   readonly insertPosition: InsertPosition;
@@ -30,11 +34,7 @@ export const getInlineAnchor: PlasmoGetInlineAnchor = () =>
     const diag = shouldLogMountAnchorDiagnostics();
     const initial = resolveLinkedInMountAnchor(document);
     if (initial) {
-      if (diag) {
-        logger.info(
-          `[anchor] mounting inline UI (immediate): ${initial.selector} (${initial.insertPosition})`,
-        );
-      }
+      logMountDiagOnce("immediate", initial.selector, initial.insertPosition);
       resolve({ element: initial.element, insertPosition: initial.insertPosition });
       return;
     }
@@ -47,11 +47,7 @@ export const getInlineAnchor: PlasmoGetInlineAnchor = () =>
       const resolved = resolveLinkedInMountAnchor(document);
       if (!resolved) return;
       observer.disconnect();
-      if (diag) {
-        logger.info(
-          `[anchor] mounting inline UI (after DOM update): ${resolved.selector} (${resolved.insertPosition})`,
-        );
-      }
+      logMountDiagOnce("after-dom", resolved.selector, resolved.insertPosition);
       resolve({ element: resolved.element, insertPosition: resolved.insertPosition });
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
@@ -146,12 +142,17 @@ function handleChange(
 ): void {
   const locator = event.locator;
   if (!locator) {
+    lastWaitingDomLogFingerprint = "";
     setExtraction(() => INITIAL_EXTRACTION);
     return;
   }
   const result = extractJobData(document);
   if (!result.ok) {
-    logger.info("waiting for DOM", { reason: result.reason, trigger: event.trigger });
+    const fp = `${locator.jobId}|${result.reason}|${event.trigger}`;
+    if (fp !== lastWaitingDomLogFingerprint) {
+      lastWaitingDomLogFingerprint = fp;
+      logger.info("waiting for DOM", { reason: result.reason, trigger: event.trigger });
+    }
     setExtraction(() => ({
       job: null,
       jobId: locator.jobId,
@@ -159,6 +160,7 @@ function handleChange(
     }));
     return;
   }
+  lastWaitingDomLogFingerprint = "";
   logger.info("extracted job", {
     trigger: event.trigger,
     jobId: locator.jobId,
