@@ -7,6 +7,7 @@ import { analysisReducer, buildJobKey, INITIAL_ANALYSIS_STATE } from "../lib/ana
 import { AnalyzeError } from "../lib/api-errors";
 import { readEnv } from "../lib/env";
 import { extractJobData } from "../lib/extractor";
+import { findLinkedInMountAnchor } from "../lib/linkedin-mount-anchor";
 import { logger } from "../lib/logger";
 import { createJobContextWatcher, type JobContextChange } from "../lib/observer";
 
@@ -15,21 +16,6 @@ export const config: PlasmoCSConfig = {
   run_at: "document_idle",
 };
 
-const ANCHOR_SELECTORS = [
-  ".job-details-jobs-unified-top-card__container--two-pane",
-  ".jobs-unified-top-card",
-  ".jobs-search__job-details--container",
-  ".jobs-details__main-content",
-] as const;
-
-function findAnchor(): Element | null {
-  for (const selector of ANCHOR_SELECTORS) {
-    const match = document.querySelector(selector);
-    if (match) return match;
-  }
-  return null;
-}
-
 interface InlineAnchor {
   readonly element: Element;
   readonly insertPosition: InsertPosition;
@@ -37,13 +23,13 @@ interface InlineAnchor {
 
 export const getInlineAnchor: PlasmoGetInlineAnchor = () =>
   new Promise<InlineAnchor>((resolve) => {
-    const existing = findAnchor();
+    const existing = findLinkedInMountAnchor();
     if (existing) {
       resolve({ element: existing, insertPosition: "beforebegin" });
       return;
     }
     const observer = new MutationObserver(() => {
-      const element = findAnchor();
+      const element = findLinkedInMountAnchor();
       if (!element) return;
       observer.disconnect();
       resolve({ element, insertPosition: "beforebegin" });

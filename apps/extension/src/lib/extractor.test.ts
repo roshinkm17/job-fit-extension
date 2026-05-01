@@ -2,13 +2,24 @@
 import { describe, expect, it } from "vitest";
 import { extractJobData } from "./extractor";
 import { LINKEDIN_LEGACY_FIXTURE, LINKEDIN_PENDING_FIXTURE } from "./fixtures/linkedin-legacy";
-import { LINKEDIN_MODERN_FIXTURE } from "./fixtures/linkedin-modern";
+import {
+  LINKEDIN_MODERN_CONTAINER_ONLY_FIXTURE,
+  LINKEDIN_MODERN_FIXTURE,
+} from "./fixtures/linkedin-modern";
 
 function parseFixture(html: string): Document {
   return new DOMParser().parseFromString(html, "text/html");
 }
 
 describe("extractJobData", () => {
+  it("extracts from modern top card without --two-pane container suffix", () => {
+    const result = extractJobData(parseFixture(LINKEDIN_MODERN_CONTAINER_ONLY_FIXTURE));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.job.title).toBe("Senior Backend Engineer");
+    expect(result.job.company).toBe("Acme Corp");
+  });
+
   it("extracts from the modern two-pane top card", () => {
     const result = extractJobData(parseFixture(LINKEDIN_MODERN_FIXTURE));
     expect(result.ok).toBe(true);
