@@ -7,7 +7,11 @@ import { analysisReducer, buildJobKey, INITIAL_ANALYSIS_STATE } from "../lib/ana
 import { AnalyzeError } from "../lib/api-errors";
 import { readEnv } from "../lib/env";
 import { extractJobData } from "../lib/extractor";
-import { findLinkedInMountAnchor } from "../lib/linkedin-mount-anchor";
+import {
+  logLinkedInMountAnchorProbe,
+  resolveLinkedInMountAnchor,
+  shouldLogMountAnchorDiagnostics,
+} from "../lib/linkedin-mount-anchor";
 import { logger } from "../lib/logger";
 import { createJobContextWatcher, type JobContextChange } from "../lib/observer";
 
@@ -23,16 +27,27 @@ interface InlineAnchor {
 
 export const getInlineAnchor: PlasmoGetInlineAnchor = () =>
   new Promise<InlineAnchor>((resolve) => {
-    const existing = findLinkedInMountAnchor();
-    if (existing) {
-      resolve({ element: existing, insertPosition: "beforebegin" });
+    const diag = shouldLogMountAnchorDiagnostics();
+    logLinkedInMountAnchorProbe(document);
+    const initial = resolveLinkedInMountAnchor(document);
+    if (initial) {
+      if (diag) {
+        logger.info(`[anchor] mounting inline UI (immediate): ${initial.selector}`);
+      }
+      resolve({ element: initial.element, insertPosition: "beforebegin" });
       return;
     }
+    if (diag) {
+      logger.warn("[anchor] no anchor on first paint — watching DOM until a selector matches…");
+    }
     const observer = new MutationObserver(() => {
-      const element = findLinkedInMountAnchor();
-      if (!element) return;
+      const resolved = resolveLinkedInMountAnchor(document);
+      if (!resolved) return;
       observer.disconnect();
-      resolve({ element, insertPosition: "beforebegin" });
+      if (diag) {
+        logger.info(`[anchor] mounting inline UI (after DOM update): ${resolved.selector}`);
+      }
+      resolve({ element: resolved.element, insertPosition: "beforebegin" });
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
   });
