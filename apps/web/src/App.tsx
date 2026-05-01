@@ -4,8 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { SignInCard } from "@/features/auth/SignInCard";
 import { PreferencesForm } from "@/features/preferences/PreferencesForm";
+import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage";
 
 export function App() {
+  if (window.location.pathname === "/privacy") {
+    return <PrivacyPolicyPage />;
+  }
+
   return (
     <AuthProvider>
       <AppShell />
@@ -22,7 +27,9 @@ function AppShell() {
       <header className="border-b border-border px-6 py-4">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
           <div className="flex min-w-0 flex-col">
-            <span className="text-base font-semibold">RoleGauge</span>
+            <a href="/" className="text-base font-semibold text-foreground no-underline">
+              RoleGauge
+            </a>
             <span className="text-xs text-muted-foreground">
               See how well LinkedIn job posts match your saved preferences.
             </span>
@@ -53,6 +60,17 @@ function AppShell() {
           )}
         </div>
       </main>
+
+      <footer className="border-t border-border px-6 py-4">
+        <div className="mx-auto flex max-w-5xl justify-center">
+          <a
+            href="/privacy"
+            className="text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            Privacy Policy
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }
