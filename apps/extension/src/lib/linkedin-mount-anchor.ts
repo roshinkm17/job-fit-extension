@@ -17,7 +17,10 @@ export const LINKEDIN_INLINE_ANCHOR_CANDIDATES: ReadonlyArray<{
   readonly selector: string;
   readonly insertPosition?: AnchorInsertPosition;
 }> = [
+  /** Prefer the job-detail column; stray cards in the rail can reuse the Company aria pattern. */
+  { selector: 'main#workspace [aria-label^="Company,"]' },
   { selector: '[aria-label^="Company,"]' },
+  { selector: 'main#workspace [data-sdui-component*="aboutTheJob"]' },
   { selector: '[data-sdui-component*="aboutTheJob"]' },
   { selector: ".job-details-jobs-unified-top-card__container--two-pane" },
   { selector: ".job-details-jobs-unified-top-card__container" },
@@ -26,7 +29,10 @@ export const LINKEDIN_INLINE_ANCHOR_CANDIDATES: ReadonlyArray<{
   { selector: ".jobs-search__job-details--container" },
   { selector: ".job-view-layout" },
   { selector: ".jobs-details__main-content" },
-  { selector: "#workspace", insertPosition: "afterbegin" },
+  /**
+   * Deliberately no `#workspace`/full-shell anchor — `afterbegin` there injects a
+   * full-width stripe and can stack with anchors in the detail column.
+   */
 ] as const;
 
 export function resolveLinkedInMountAnchor(root: ParentNode = document): {

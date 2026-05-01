@@ -66,8 +66,11 @@ export function ErrorView({ message, errorCode, webAppUrl, onRetry }: ErrorViewP
                 lineHeight: 1.5,
               }}
             >
-              Open the RoleGauge web app, sign in with your account, then return to LinkedIn. Your
-              session syncs to this extension automatically.
+              The web app and extension use separate storage. After you sign in on the RoleGauge
+              site, the browser must be allowed to sync your session to this extension (matching
+              origins in the extension manifest plus{" "}
+              <code style={{ fontSize: "0.85em" }}>VITE_CHROME_EXTENSION_ID</code> on the web app).
+              Open the site from the button below, refresh if needed, then try again.
             </p>
           </div>
         </div>

@@ -36,7 +36,9 @@ function textFrom(root: ParentNode, selectors: readonly string[]): string {
 
 /** SDUI stacks company + meta line (location · relative time); legacy selectors miss the paragraph. */
 function locationNearCompanyBlock(scope: ParentNode): string | null {
-  const company = scope.querySelector('[aria-label^="Company,"]');
+  const company =
+    scope.querySelector('main#workspace [aria-label^="Company,"]') ??
+    scope.querySelector('[aria-label^="Company,"]');
   if (!(company instanceof Element)) return null;
 
   function scanParagraphs(holder: ParentNode): string | null {

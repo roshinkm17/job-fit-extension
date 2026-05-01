@@ -39,7 +39,10 @@
       "https://*.linkedin.com/*",
       "http://localhost:3000/*",
       "http://127.0.0.1:3000/*",
-      "https://*.supabase.co/*"
+      "https://*.supabase.co/*",
+      "https://job-fit-extension-production.up.railway.app/*",
+      "https://job-fit-extension-backend.vercel.app/*",
+      "https://lokcsniznppczuhdyhnx.supabase.co/*"
     ],
     "permissions": [
       "storage"

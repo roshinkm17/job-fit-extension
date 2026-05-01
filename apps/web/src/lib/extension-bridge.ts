@@ -24,13 +24,27 @@ function getChrome(): ChromeWithRuntime | null {
  * when `VITE_CHROME_EXTENSION_ID` is unset or the page is not running
  * with `chrome.*` (e.g. Firefox or Safari without the bridge).
  */
+function warnBridgeFailure(context: string): void {
+  const chrome = getChrome();
+  const lastError = chrome?.runtime.lastError;
+  if (!lastError?.message) return;
+  const base = `[RoleGauge] extension bridge (${context}): ${lastError.message}`;
+  if (import.meta.env.DEV) {
+    console.warn(base);
+    return;
+  }
+  console.warn(
+    `${base} Add your deployed web origin to apps/extension/package.json → manifest.externally_connectable.matches (must match the RoleGauge site URL), rebuild the extension, and set VITE_CHROME_EXTENSION_ID in the web app env.`,
+  );
+}
+
 export function pushSessionToExtension(session: Session | null): void {
   if (!EXT_ID) return;
   const chrome = getChrome();
   if (!chrome) return;
   if (!session) {
     chrome.runtime.sendMessage(EXT_ID, { type: "JOB_FIT_CLEAR_SESSION" }, () => {
-      void chrome.runtime.lastError;
+      warnBridgeFailure("sign-out");
     });
     return;
   }
@@ -42,7 +56,7 @@ export function pushSessionToExtension(session: Session | null): void {
       refresh_token: session.refresh_token,
     },
     () => {
-      void chrome.runtime.lastError;
+      warnBridgeFailure("set-session");
     },
   );
 }

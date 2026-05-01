@@ -33,9 +33,12 @@ The backend must list your extension origin in `BACKEND_CORS_ORIGINS`, e.g.:
 The id comes from `chrome://extensions` (unpacked) or the Chrome Web Store
 after publishing.
 
-**Production web app + API**: add your deployed web origin to
-`package.json` → `manifest.externally_connectable.matches` and your API host to
-`manifest.host_permissions` before building, then load from `.env` as needed.
+**Session hand-off**: the web app calls `chrome.runtime.sendMessage` after sign-in. Chrome only
+delivers that if (1) **`VITE_CHROME_EXTENSION_ID`** is set where the web app is built/run, (2)
+`apps/extension/package.json` → **`manifest.externally_connectable.matches`** lists your exact
+deployed RoleGauge URL (example: `https://your-subdomain.vercel.app/*`). Local dev ships with
+localhost only — add your prod origin before `pnpm ext:build` for production. Rebuild both web and
+extension after changing either.
 
 ## Layout (high level)
 

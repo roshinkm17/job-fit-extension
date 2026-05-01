@@ -24,6 +24,8 @@ export const JOB_TITLE_SELECTORS = [
 ] as const;
 
 export const JOB_COMPANY_SELECTORS = [
+  'main#workspace [aria-label^="Company,"] a[href*="/company/"]',
+  'main#workspace [aria-label^="Company,"]',
   '[aria-label^="Company,"] a[href*="/company/"]',
   '[aria-label^="Company,"]',
   ".job-details-jobs-unified-top-card__company-name a",
@@ -41,6 +43,8 @@ export const JOB_LOCATION_SELECTORS = [
 ] as const;
 
 export const JOB_DESCRIPTION_SELECTORS = [
+  'main#workspace [data-sdui-component*="aboutTheJob"] [data-testid="expandable-text-box"]',
+  'main#workspace [data-sdui-component*="aboutTheJob"]',
   '[data-sdui-component*="aboutTheJob"] [data-testid="expandable-text-box"]',
   '[data-sdui-component*="aboutTheJob"]',
   '[componentkey^="JobDetails_AboutTheCompany"] [data-testid="expandable-text-box"]',
