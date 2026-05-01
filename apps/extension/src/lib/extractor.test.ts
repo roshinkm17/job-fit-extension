@@ -7,6 +7,7 @@ import {
   LINKEDIN_MODERN_FIXTURE,
 } from "./fixtures/linkedin-modern";
 import { LINKEDIN_SDUI_JOB_FIXTURE } from "./fixtures/linkedin-sdui";
+import { LINKEDIN_SDUI_PHANTOM_LEGACY_ROOT_FIXTURE } from "./fixtures/linkedin-sdui-phantom-root";
 
 function parseFixture(html: string): Document {
   return new DOMParser().parseFromString(html, "text/html");
@@ -31,6 +32,16 @@ describe("extractJobData", () => {
     expect(result.job.description).toContain("Senior Backend Engineer");
     expect(result.job.description).toContain("6+ years of production experience");
     expect(result.job.description).toContain("Remote-first, US time zones");
+  });
+
+  it("scopes extraction to #workspace when a phantom legacy shell precedes SDUI markup", () => {
+    const result = extractJobData(parseFixture(LINKEDIN_SDUI_PHANTOM_LEGACY_ROOT_FIXTURE));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.job.title).toBe("Staff Software Engineer");
+    expect(result.job.company).toBe("Commonwealth Bank");
+    expect(result.job.location).toContain("Bengaluru East");
+    expect(result.job.description).toContain("Staff Software Engineer");
   });
 
   it("extracts from hashed SDUI job shell via aria/data-sdui/componentkey hints", () => {

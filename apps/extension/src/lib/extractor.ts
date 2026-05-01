@@ -28,6 +28,20 @@ function queryFirst(root: ParentNode, selectors: readonly string[]): Element | n
   return null;
 }
 
+/**
+ * Prefer `#workspace` when SDUI markers live there. LinkedIn may still emit an
+ * empty `.jobs-details__main-content` earlier in the tree; `queryFirst` would
+ * latch onto it and extraction would never see the real job column.
+ */
+function resolveJobExtractScope(document: Document): Element {
+  const workspace =
+    document.querySelector("main#workspace") ?? document.querySelector("#workspace");
+  if (workspace?.querySelector('[data-sdui-component*="aboutTheJob"], [aria-label^="Company,"]')) {
+    return workspace;
+  }
+  return queryFirst(document, JOB_ROOT_SELECTORS) ?? document.body;
+}
+
 function textFrom(root: ParentNode, selectors: readonly string[]): string {
   const element = queryFirst(root, selectors);
   if (!element) return "";
@@ -94,8 +108,7 @@ function titleFromWorkspaceRoot(root: ParentNode): string {
  * content script and fixture-based tests.
  */
 export function extractJobData(document: Document): ExtractResult {
-  const root = queryFirst(document, JOB_ROOT_SELECTORS);
-  const scope = root ?? document.body;
+  const scope = resolveJobExtractScope(document);
   if (!scope) return { ok: false, reason: "missing-root" };
 
   const title = textFrom(scope, JOB_TITLE_SELECTORS) || titleFromWorkspaceRoot(scope);

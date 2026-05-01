@@ -17,11 +17,14 @@ export const LINKEDIN_INLINE_ANCHOR_CANDIDATES: ReadonlyArray<{
   readonly selector: string;
   readonly insertPosition?: AnchorInsertPosition;
 }> = [
-  /** Prefer the job-detail column; stray cards in the rail can reuse the Company aria pattern. */
-  { selector: 'main#workspace [aria-label^="Company,"]' },
-  { selector: '[aria-label^="Company,"]' },
+  /**
+   * Header company row re-renders often; the about-job SDUI host tends to stay
+   * attached once the description shell mounts (better for Plasmo anchoring).
+   */
   { selector: 'main#workspace [data-sdui-component*="aboutTheJob"]' },
   { selector: '[data-sdui-component*="aboutTheJob"]' },
+  { selector: 'main#workspace [aria-label^="Company,"]' },
+  { selector: '[aria-label^="Company,"]' },
   { selector: ".job-details-jobs-unified-top-card__container--two-pane" },
   { selector: ".job-details-jobs-unified-top-card__container" },
   { selector: '[class*="job-details-jobs-unified-top-card__container"]' },

@@ -28,7 +28,6 @@ interface InlineAnchor {
 export const getInlineAnchor: PlasmoGetInlineAnchor = () =>
   new Promise<InlineAnchor>((resolve) => {
     const diag = shouldLogMountAnchorDiagnostics();
-    logLinkedInMountAnchorProbe(document);
     const initial = resolveLinkedInMountAnchor(document);
     if (initial) {
       if (diag) {
@@ -40,7 +39,9 @@ export const getInlineAnchor: PlasmoGetInlineAnchor = () =>
       return;
     }
     if (diag) {
-      logger.warn("[anchor] no anchor on first paint — watching DOM until a selector matches…");
+      logger.warn("[anchor] no anchor on first paint — full selector probe:");
+      logLinkedInMountAnchorProbe(document);
+      logger.warn("[anchor] watching DOM until a selector matches…");
     }
     const observer = new MutationObserver(() => {
       const resolved = resolveLinkedInMountAnchor(document);
