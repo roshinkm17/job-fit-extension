@@ -7,27 +7,42 @@ export function shouldLogMountAnchorDiagnostics(): boolean {
   );
 }
 
+export type AnchorInsertPosition = "beforebegin" | "afterbegin" | "beforeend" | "afterend";
+
 /**
- * Plasmo's inline UI must anchor to an existing DOM node. LinkedIn A/B-tests
- * class names constantly; ordered fallbacks minimize "widget never appears".
+ * Stable hooks first — LinkedIn hashed classes are unreliable. `insertPosition`
+ * defaults to `beforebegin`; `afterbegin` on `#workspace` keeps UI inside SPA shell.
  */
-export const LINKEDIN_INLINE_ANCHOR_SELECTORS = [
-  ".job-details-jobs-unified-top-card__container--two-pane",
-  ".job-details-jobs-unified-top-card__container",
-  '[class*="job-details-jobs-unified-top-card__container"]',
-  ".jobs-unified-top-card",
-  ".jobs-search__job-details--container",
-  ".job-view-layout",
-  ".jobs-details__main-content",
+export const LINKEDIN_INLINE_ANCHOR_CANDIDATES: ReadonlyArray<{
+  readonly selector: string;
+  readonly insertPosition?: AnchorInsertPosition;
+}> = [
+  { selector: '[aria-label^="Company,"]' },
+  { selector: '[data-sdui-component*="aboutTheJob"]' },
+  { selector: ".job-details-jobs-unified-top-card__container--two-pane" },
+  { selector: ".job-details-jobs-unified-top-card__container" },
+  { selector: '[class*="job-details-jobs-unified-top-card__container"]' },
+  { selector: ".jobs-unified-top-card" },
+  { selector: ".jobs-search__job-details--container" },
+  { selector: ".job-view-layout" },
+  { selector: ".jobs-details__main-content" },
+  { selector: "#workspace", insertPosition: "afterbegin" },
 ] as const;
 
 export function resolveLinkedInMountAnchor(root: ParentNode = document): {
   readonly element: Element;
   readonly selector: string;
+  readonly insertPosition: AnchorInsertPosition;
 } | null {
-  for (const selector of LINKEDIN_INLINE_ANCHOR_SELECTORS) {
-    const match = root.querySelector(selector);
-    if (match) return { element: match, selector };
+  for (const candidate of LINKEDIN_INLINE_ANCHOR_CANDIDATES) {
+    const match = root.querySelector(candidate.selector);
+    if (match) {
+      return {
+        element: match,
+        selector: candidate.selector,
+        insertPosition: candidate.insertPosition ?? "beforebegin",
+      };
+    }
   }
   return null;
 }
@@ -40,16 +55,17 @@ export function findLinkedInMountAnchor(root: ParentNode = document): Element | 
 export function logLinkedInMountAnchorProbe(root: ParentNode = document): void {
   if (!shouldLogMountAnchorDiagnostics()) return;
   logger.info("[anchor] probing mount selectors (see × = no match, ✓ = match)");
-  for (const selector of LINKEDIN_INLINE_ANCHOR_SELECTORS) {
-    const match = root.querySelector(selector);
-    logger.info(`[anchor]   ${match ? "✓" : "×"} ${selector}`);
+  for (const candidate of LINKEDIN_INLINE_ANCHOR_CANDIDATES) {
+    const match = root.querySelector(candidate.selector);
+    const suffix = candidate.insertPosition ? ` [${candidate.insertPosition}]` : "";
+    logger.info(`[anchor]   ${match ? "✓" : "×"} ${candidate.selector}${suffix}`);
   }
   const resolved = resolveLinkedInMountAnchor(root);
   if (resolved) {
-    logger.info(`[anchor] first winning selector: ${resolved.selector}`);
+    logger.info(`[anchor] first winner: ${resolved.selector} (${resolved.insertPosition})`);
   } else {
     logger.warn(
-      "[anchor] no element matched — widget will not mount until DOM matches a selector (or LinkedIn uses shadow DOM).",
+      "[anchor] no element matched — widget will not mount until DOM matches a selector (or LinkedIn uses closed shadow DOM).",
     );
   }
 }

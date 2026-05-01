@@ -5,6 +5,7 @@ import {
   LINKEDIN_MODERN_CONTAINER_ONLY_FIXTURE,
   LINKEDIN_MODERN_FIXTURE,
 } from "./fixtures/linkedin-modern";
+import { LINKEDIN_SDUI_JOB_FIXTURE } from "./fixtures/linkedin-sdui";
 import { findLinkedInMountAnchor } from "./linkedin-mount-anchor";
 
 function parse(html: string): Document {
@@ -31,5 +32,11 @@ describe("findLinkedInMountAnchor", () => {
     const doc = parse(LINKEDIN_LEGACY_FIXTURE);
     const el = findLinkedInMountAnchor(doc);
     expect(el?.classList.contains("jobs-unified-top-card")).toBe(true);
+  });
+
+  it("prefers semantic company aria block on hashed SDUI detail pages", () => {
+    const doc = parse(LINKEDIN_SDUI_JOB_FIXTURE);
+    const el = findLinkedInMountAnchor(doc);
+    expect(el?.getAttribute("aria-label")?.startsWith("Company,")).toBe(true);
   });
 });

@@ -6,6 +6,7 @@ import {
   LINKEDIN_MODERN_CONTAINER_ONLY_FIXTURE,
   LINKEDIN_MODERN_FIXTURE,
 } from "./fixtures/linkedin-modern";
+import { LINKEDIN_SDUI_JOB_FIXTURE } from "./fixtures/linkedin-sdui";
 
 function parseFixture(html: string): Document {
   return new DOMParser().parseFromString(html, "text/html");
@@ -30,6 +31,17 @@ describe("extractJobData", () => {
     expect(result.job.description).toContain("Senior Backend Engineer");
     expect(result.job.description).toContain("6+ years of production experience");
     expect(result.job.description).toContain("Remote-first, US time zones");
+  });
+
+  it("extracts from hashed SDUI job shell via aria/data-sdui/componentkey hints", () => {
+    const result = extractJobData(parseFixture(LINKEDIN_SDUI_JOB_FIXTURE));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.job.title).toBe("Software Engineer II");
+    expect(result.job.company).toBe("Honeywell");
+    expect(result.job.location).toBe("Bengaluru, Karnataka, India");
+    expect(result.job.description).toContain("Honeywell helps organizations");
+    expect(result.job.description.toLowerCase()).toContain("about us");
   });
 
   it("extracts from the legacy unified top card", () => {

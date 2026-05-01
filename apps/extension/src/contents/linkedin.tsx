@@ -32,9 +32,11 @@ export const getInlineAnchor: PlasmoGetInlineAnchor = () =>
     const initial = resolveLinkedInMountAnchor(document);
     if (initial) {
       if (diag) {
-        logger.info(`[anchor] mounting inline UI (immediate): ${initial.selector}`);
+        logger.info(
+          `[anchor] mounting inline UI (immediate): ${initial.selector} (${initial.insertPosition})`,
+        );
       }
-      resolve({ element: initial.element, insertPosition: "beforebegin" });
+      resolve({ element: initial.element, insertPosition: initial.insertPosition });
       return;
     }
     if (diag) {
@@ -45,9 +47,11 @@ export const getInlineAnchor: PlasmoGetInlineAnchor = () =>
       if (!resolved) return;
       observer.disconnect();
       if (diag) {
-        logger.info(`[anchor] mounting inline UI (after DOM update): ${resolved.selector}`);
+        logger.info(
+          `[anchor] mounting inline UI (after DOM update): ${resolved.selector} (${resolved.insertPosition})`,
+        );
       }
-      resolve({ element: resolved.element, insertPosition: "beforebegin" });
+      resolve({ element: resolved.element, insertPosition: resolved.insertPosition });
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
   });
